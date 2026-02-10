@@ -1,0 +1,18 @@
+# Build directories
+build/
+builddir/
+
+# Rust
+engine/target/
+engine/Cargo.lock
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -14,15 +14,29 @@ else
 endif
 
 # Build the Rust engine
-engine_binary = custom_target('emoji-input-engine',
-  output: 'emoji-input-engine',
+cargo_build = custom_target('cargo-build',
+  output: 'cargo-build-stamp',
   build_by_default: true,
   build_always_stale: true,
   console: true,
   command: [
-    cargo, 'build',
-    cargo_flags,
-    '--manifest-path', meson.current_source_dir() / 'Cargo.toml',
+    'sh', '-c',
+    'cd @SOURCE_ROOT@/engine && @0@ build @1@ && touch @OUTPUT@'.format(
+      cargo.full_path(),
+      ' '.join(cargo_flags)
+    )
+  ],
+)
+
+# Copy the binary to build directory for installation
+engine_binary = custom_target('emoji-input-engine',
+  output: 'emoji-input-engine',
+  depends: cargo_build,
+  build_by_default: true,
+  command: [
+    'cp',
+    target_dir / 'emoji-input-engine',
+    '@OUTPUT@'
   ],
   install: true,
   install_dir: libexecdir,
