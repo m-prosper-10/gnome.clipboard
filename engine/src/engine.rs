@@ -1,5 +1,5 @@
 use zbus::{interface, fdo, object_server::SignalEmitter};
-use zvariant::{Value, OwnedValue};
+use zvariant::Value;
 use std::collections::HashMap;
 
 pub struct EmojiEngine {
@@ -19,7 +19,7 @@ impl EmojiEngine {
     
     /// Processes a key event and returns an optional string to commit.
     /// Returns (handled, commit_text)
-    pub fn process_key_event(&mut self, keyval: u32, _keycode: u32, _state: u32) -> (bool, Option<String>) {
+    pub fn internal_process_key_event(&mut self, keyval: u32, _keycode: u32, _state: u32) -> (bool, Option<String>) {
         if !self.enabled {
             return (false, None);
         }
@@ -49,7 +49,7 @@ impl EmojiEngine {
         // Handle Escape or Backspace
         match keyval {
             0xff1b => { // Esc
-                self.reset();
+                self.internal_reset();
                 (true, None)
             }
             0xff08 => { // Backspace
@@ -63,25 +63,25 @@ impl EmojiEngine {
             _ => {
                 // For other keys, if we have a buffer, we might want to clear it
                 if !self.buffer.is_empty() {
-                    self.reset();
+                    self.internal_reset();
                 }
                 (false, None)
             }
         }
     }
     
-    pub fn reset(&mut self) {
+    pub fn internal_reset(&mut self) {
         self.buffer.clear();
     }
     
-    pub fn enable(&mut self) {
+    pub fn internal_enable(&mut self) {
         self.enabled = true;
-        self.reset();
+        self.internal_reset();
     }
     
-    pub fn disable(&mut self) {
+    pub fn internal_disable(&mut self) {
         self.enabled = false;
-        self.reset();
+        self.internal_reset();
     }
 }
 
@@ -99,48 +99,40 @@ impl EmojiEngine {
             return Ok(false);
         }
 
-        let (handled, commit) = self.process_key_event(keyval, 0, 0);
+        let (handled, commit) = self.internal_process_key_event(keyval, 0, 0);
         
         if let Some(text) = commit {
-            let _ = self.commit_text(&se, text).await;
+            let _ = self.emit_commit_text(&se, text).await;
         }
         
         Ok(handled)
     }
 
     async fn enable(&mut self) -> fdo::Result<()> {
-        self.enable();
+        self.internal_enable();
         Ok(())
     }
 
     async fn disable(&mut self) -> fdo::Result<()> {
-        self.disable();
+        self.internal_disable();
         Ok(())
     }
 
     async fn reset(&mut self) -> fdo::Result<()> {
-        self.reset();
+        self.internal_reset();
         Ok(())
     }
 
-    #[zbus(signal)]
-    async fn commit_text(&self, #[zbus(signal_emitter)] se: SignalEmitter<'_>, text: String) -> zbus::Result<()>;
-
-    #[zbus(out_args = "text")]
-    async fn commit_text_signal_handler(se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
-        // IBusText is (sava{sv}) wrapped in a variant
-        let ibus_text = (text, Vec::<OwnedValue>::new(), HashMap::<String, OwnedValue>::new());
-        let variant = Value::from(ibus_text);
-        se.emit::<Self, Value>("CommitText", &variant).await
-    }
+    #[zbus(signal, name = "CommitText")]
+    async fn commit_text_signal(se: &SignalEmitter<'_>, text: Value<'_>) -> zbus::Result<()>;
 }
 
-// Redefine commit_text to match IBus signal signature (taking a variant)
 impl EmojiEngine {
-    async fn commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
-        let ibus_text = (text, Vec::<OwnedValue>::new(), HashMap::<String, OwnedValue>::new());
+    async fn emit_commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
+        // IBusText is (sava{sv}) wrapped in a variant
+        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
         let variant = Value::from(ibus_text);
-        se.emit_with_name("CommitText", &variant).await
+        Self::commit_text_signal(se, variant.into()).await
     }
 }
 
@@ -167,21 +159,21 @@ mod tests {
         engine.enable();
         
         // Type ':'
-        let (handled, commit) = engine.process_key_event(0x3a, 0, 0);
+        let (handled, commit) = engine.internal_process_key_event(0x3a, 0, 0);
         assert!(handled);
         assert_eq!(commit, None);
         assert_eq!(engine.buffer, ":");
         
         // Type 'e'
-        let (handled, commit) = engine.process_key_event(0x65, 0, 0);
+        let (handled, commit) = engine.internal_process_key_event(0x65, 0, 0);
         assert!(handled);
         assert_eq!(commit, None);
         
         // Finish ":emoji:"
         for c in "moji".chars() {
-            engine.process_key_event(c as u32, 0, 0);
+            engine.internal_process_key_event(c as u32, 0, 0);
         }
-        let (handled, commit) = engine.process_key_event(0x3a, 0, 0);
+        let (handled, commit) = engine.internal_process_key_event(0x3a, 0, 0);
         
         assert!(handled);
         assert_eq!(commit, Some("🙂".to_string()));

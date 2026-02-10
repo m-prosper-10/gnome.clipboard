@@ -1,4 +1,4 @@
-use zbus::{interface, ConnectionBuilder, fdo};
+use zbus::{interface, connection, fdo, Connection};
 use zvariant::ObjectPath;
 use std::env;
 use std::process::ExitCode;
@@ -49,7 +49,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     // Get IBus address from environment or file
     let addr = env::var("IBUS_ADDRESS").or_else(|_| get_ibus_address())?;
     
-    let connection = ConnectionBuilder::address(addr)?
+    let connection: Connection = connection::Builder::address(addr.try_into()?)?
         .name("org.freedesktop.IBus.EmojiInput")?
         .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
         .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::new())?
