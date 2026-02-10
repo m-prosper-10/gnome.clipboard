@@ -10,8 +10,11 @@ gio = "0.20"
 glib = "0.20"
 ibus = "0.2.0"
 libc = "0.2"
+librush = "0.2.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tokio = { version = "1.49.0", features = ["full"] }
+xkeysym = "0.2.1"
 
 [lib]
 name = "emoji_input_engine"

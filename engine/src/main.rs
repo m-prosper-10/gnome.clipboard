@@ -1,20 +1,29 @@
-// PHASE 2: Minimal IBus Engine Implementation
-// This is a hardcoded test implementation that commits a single emoji
-
-use ibus::{self, Bus, Factory, Engine};
-use glib;
+use librush::ibus::{self, IBus, IBusFactory};
 use std::env;
+use std::process::ExitCode;
 
 mod engine;
 use engine::EmojiEngine;
 
-fn main() {
+struct EmojiFactory;
+
+impl IBusFactory<EmojiEngine> for EmojiFactory {
+    fn create_engine(&mut self, _name: String) -> Result<EmojiEngine, String> {
+        Ok(EmojiEngine::new())
+    }
+}
+
+#[tokio::main]
+async fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
     
     if args.len() > 1 && args[1] == "--ibus" {
         // IBus mode - run as an input method engine
         println!("Starting emoji-input-engine in IBus mode...");
-        run_ibus_engine();
+        if let Err(e) = run_ibus_engine().await {
+            eprintln!("Error running IBus engine: {:?}", e);
+            return ExitCode::FAILURE;
+        }
     } else {
         // Standalone mode - just print version info
         println!("emoji-input-engine v{}", env!("CARGO_PKG_VERSION"));
@@ -26,46 +35,24 @@ fn main() {
         println!("  3. Select 'Emoji Input' in ibus-setup");
         println!("  4. Type ':emoji:' to insert 🙂");
     }
+    ExitCode::SUCCESS
 }
 
-fn run_ibus_engine() {
-    // Initialize IBus
-    ibus::init();
+async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
+    let addr = ibus::get_ibus_addr()?;
+    let factory = EmojiFactory;
     
-    // Create a new IBus Bus
-    let bus = Bus::new();
-    if !bus.is_connected() {
-        eprintln!("Failed to connect to IBus.");
-        return;
-    }
-
-    // Create a factory for our engine
-    let mut factory = Factory::new(bus.connection());
+    // The "name" here should match the engine name in ibus-component.xml
+    // but librush::IBus::new uses it for the DBus service name usually.
+    // IBus engines use a unique bus name like "org.freedesktop.IBus.EmojiInput"
+    let _ibus = IBus::new(addr, factory, "org.freedesktop.IBus.EmojiInput".to_string()).await?;
     
-    // Create our engine state
-    let mut emoji_engine = EmojiEngine::new();
+    println!("Engine process started. Registered 'emoji-input' via librush.");
+    println!("Press Ctrl+C to stop.");
     
-    // Register the engine
-    // Note: The specific API for ibus-rs might vary, 
-    // but we'll try to follow the C-style pattern it claims to mirror.
-    factory.add_engine("emoji-input", "EmojiEngine");
+    // Keep the process alive
+    tokio::signal::ctrl_c().await?;
+    println!("\nShutting down engine...");
     
-    println!("Engine process started. Registered 'emoji-input'.");
-    println!("Waiting for IBus connections...");
-    
-    // Initialize GLib main loop (IBus uses it internally)
-    let main_loop = glib::MainLoop::new(None, false);
-    
-    // Set up signal handlers for clean exit
-    let loop_clone = main_loop.clone();
-    let _source_id = glib::unix_signal_add(libc::SIGINT, move || {
-        println!("\nShutting down engine...");
-        loop_clone.quit();
-        glib::ControlFlow::Break
-    });
-    
-    // Run the main loop
-    main_loop.run();
-    
-    println!("Engine stopped.");
+    Ok(())
 }
