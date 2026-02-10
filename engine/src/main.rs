@@ -63,7 +63,6 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     let database: engine::EmojiDatabase = serde_json::from_str(&db_content)?;
     println!("Loaded {} emojis.", database.emojis.len());
 
-    // Get IBus address from environment or file
     let addr_str = env::var("IBUS_ADDRESS")
         .ok()
         .filter(|s| !s.is_empty())
