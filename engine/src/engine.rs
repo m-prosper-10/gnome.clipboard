@@ -1,12 +1,43 @@
 use zbus::{interface, fdo, object_server::SignalEmitter};
 use zvariant::Value;
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Emoji {
+    pub char: String,
+    pub name: String,
+    pub keywords: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EmojiDatabase {
+    pub version: String,
+    pub emojis: Vec<Emoji>,
+}
+
+impl EmojiDatabase {
+    pub fn search(&self, query: &str) -> Vec<&Emoji> {
+        if query.is_empty() {
+            return Vec::new();
+        }
+        
+        self.emojis.iter()
+            .filter(|e| {
+                e.name.starts_with(query) || 
+                e.keywords.iter().any(|k| k.starts_with(query))
+            })
+            .collect()
+    }
+}
 
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
     pub buffer: String,
     // Whether the engine is currently active
     pub enabled: bool,
+    // Emoji database
+    pub database: EmojiDatabase,
 }
 
 impl EmojiEngine {
@@ -14,6 +45,15 @@ impl EmojiEngine {
         EmojiEngine {
             buffer: String::new(),
             enabled: false,
+            database: EmojiDatabase::default(),
+        }
+    }
+    
+    pub fn with_database(database: EmojiDatabase) -> Self {
+        EmojiEngine {
+            buffer: String::new(),
+            enabled: false,
+            database,
         }
     }
     
@@ -25,28 +65,23 @@ impl EmojiEngine {
         }
 
         // Check if it's a printable character (rough check for ASCII/Basic Latin)
-        // IBus keyvals for printable characters are usually their ASCII values
         if (0x20..=0x7E).contains(&keyval) {
             let c = (keyval as u8) as char;
-            self.buffer.push(c);
             
-            // Check for trigger sequence ":emoji:"
-            if self.buffer.ends_with(":emoji:") {
-                self.buffer.clear();
-                return (true, Some("🙂".to_string()));
-            }
-            
-            // If it starts with ':', we handle it but don't commit yet
-            if self.buffer.starts_with(':') {
+            if c == ':' && self.buffer.is_empty() {
+                self.buffer.push(c);
                 return (true, None);
-            } else {
-                // If it doesn't start with ':', clear and pass through
-                self.buffer.clear();
-                return (false, None);
             }
+            
+            if !self.buffer.is_empty() {
+                self.buffer.push(c);
+                return (true, None);
+            }
+            
+            return (false, None);
         }
 
-        // Handle Escape or Backspace
+        // Handle Escape, Backspace, Enter
         match keyval {
             0xff1b => { // Esc
                 self.internal_reset();
@@ -55,13 +90,27 @@ impl EmojiEngine {
             0xff08 => { // Backspace
                 if !self.buffer.is_empty() {
                     self.buffer.pop();
+                    if self.buffer.is_empty() {
+                        self.internal_reset();
+                    }
                     (true, None)
                 } else {
                     (false, None)
                 }
             }
+            0xff0d => { // Enter
+                if !self.buffer.is_empty() && self.buffer.starts_with(':') {
+                    let query = self.buffer.trim_start_matches(':');
+                    let results = self.database.search(query);
+                    if let Some(emoji) = results.first() {
+                        let text = emoji.char.clone();
+                        self.internal_reset();
+                        return (true, Some(text));
+                    }
+                }
+                (false, None)
+            }
             _ => {
-                // For other keys, if we have a buffer, we might want to clear it
                 if !self.buffer.is_empty() {
                     self.internal_reset();
                 }
@@ -101,6 +150,10 @@ impl EmojiEngine {
 
         let (handled, commit) = self.internal_process_key_event(keyval, 0, 0);
         
+        // Update preedit text always if we are in composition
+        let visible = !self.buffer.is_empty();
+        let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
+
         if let Some(text) = commit {
             let _ = self.emit_commit_text(&se, text).await;
         }
@@ -125,14 +178,27 @@ impl EmojiEngine {
 
     #[zbus(signal, name = "CommitText")]
     async fn commit_text_signal(se: &SignalEmitter<'_>, text: Value<'_>) -> zbus::Result<()>;
+
+    #[zbus(signal, name = "UpdatePreeditText")]
+    async fn update_preedit_text_signal(
+        se: &SignalEmitter<'_>,
+        text: Value<'_>,
+        cursor_pos: u32,
+        visible: bool,
+    ) -> zbus::Result<()>;
 }
 
 impl EmojiEngine {
     async fn emit_commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
-        // IBusText is (sava{sv}) wrapped in a variant
         let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
         let variant = Value::from(ibus_text);
         Self::commit_text_signal(se, variant.into()).await
+    }
+
+    async fn emit_update_preedit_text(&self, se: &SignalEmitter<'_>, text: String, cursor_pos: u32, visible: bool) -> zbus::Result<()> {
+        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
+        let variant = Value::from(ibus_text);
+        Self::update_preedit_text_signal(se, variant.into(), cursor_pos, visible).await
     }
 }
 
@@ -155,7 +221,14 @@ mod tests {
     
     #[test]
     fn test_trigger_logic() {
-        let mut engine = EmojiEngine::new();
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![] },
+                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![] },
+            ],
+        };
+        let mut engine = EmojiEngine::with_database(db);
         engine.internal_enable();
         
         // Type ':'
@@ -164,19 +237,37 @@ mod tests {
         assert_eq!(commit, None);
         assert_eq!(engine.buffer, ":");
         
-        // Type 'e'
-        let (handled, commit) = engine.internal_process_key_event(0x65, 0, 0);
+        // Type 's'
+        let (handled, commit) = engine.internal_process_key_event(0x73, 0, 0);
         assert!(handled);
         assert_eq!(commit, None);
+        assert_eq!(engine.buffer, ":s");
         
-        // Finish ":emoji:"
-        for c in "moji".chars() {
-            engine.internal_process_key_event(c as u32, 0, 0);
-        }
-        let (handled, commit) = engine.internal_process_key_event(0x3a, 0, 0);
-        
+        // Press Enter
+        let (handled, commit) = engine.internal_process_key_event(0xff0d, 0, 0);
         assert!(handled);
         assert_eq!(commit, Some("🙂".to_string()));
         assert_eq!(engine.buffer, "");
+    }
+    
+    #[test]
+    fn test_search_logic() {
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![] },
+                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()] },
+            ],
+        };
+        
+        assert_eq!(db.search("smi").len(), 1);
+        assert_eq!(db.search("smi")[0].char, "🙂");
+        
+        // Search by keyword
+        assert_eq!(db.search("hap").len(), 1);
+        assert_eq!(db.search("hap")[0].char, "😊");
+        
+        // No match
+        assert_eq!(db.search("xyz").len(), 0);
     }
 }

@@ -1,5 +1,11 @@
 {
-  "emojis": [],
   "version": "0.1.0",
-  "note": "Emoji database will be populated in PHASE 3"
+  "emojis": [
+    {"char": "🙂", "name": "slight_smile", "keywords": ["smile", "happy"]},
+    {"char": "😊", "name": "blush", "keywords": ["smile", "happy", "blush"]},
+    {"char": "😄", "name": "smile", "keywords": ["smile", "happy", "joy"]},
+    {"char": "❤️", "name": "heart", "keywords": ["love", "heart"]},
+    {"char": "👍", "name": "thumbsup", "keywords": ["yes", "ok", "agree"]},
+    {"char": "🎉", "name": "party", "keywords": ["celebrate", "congrats"]}
+  ]
 }

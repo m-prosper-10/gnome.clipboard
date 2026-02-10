@@ -34,7 +34,7 @@ async fn main() -> ExitCode {
     } else {
         // Standalone mode - just print version info
         println!("emoji-input-engine v{}", env!("CARGO_PKG_VERSION"));
-        println!("PHASE 2: Minimal IBus engine with hardcoded emoji");
+        println!("PHASE 3: Composition Buffer + Search Core");
         println!();
         println!("To use as IBus engine:");
         println!("  1. Copy ibus-component.xml to ~/.local/share/ibus/component/");
@@ -46,14 +46,35 @@ async fn main() -> ExitCode {
 }
 
 async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
+    // Load emoji database
+    let db_path = env::var("EMOJI_DATA_DIR")
+        .unwrap_or_else(|_| "/usr/local/share/gnome-emoji-input".to_string());
+    let db_file = format!("{}/emojis.json", db_path);
+    
+    // Fallback to local data dir for development if not found
+    let db_file = if std::path::Path::new(&db_file).exists() {
+        db_file
+    } else {
+        "data/emojis.json".to_string()
+    };
+    
+    println!("Loading emoji database from: {}", db_file);
+    let db_content = std::fs::read_to_string(db_file)?;
+    let database: engine::EmojiDatabase = serde_json::from_str(&db_content)?;
+    println!("Loaded {} emojis.", database.emojis.len());
+
     // Get IBus address from environment or file
-    let addr_str = env::var("IBUS_ADDRESS").or_else(|_| get_ibus_address())?;
+    let addr_str = env::var("IBUS_ADDRESS")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .or_else(|| get_ibus_address().ok())
+        .ok_or_else(|| "Could not find IBUS_ADDRESS".to_string())?;
     let address: zbus::Address = addr_str.parse()?;
     
     let connection: Connection = connection::Builder::address(address)?
         .name("org.freedesktop.IBus.EmojiInput")?
         .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
-        .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::new())?
+        .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::with_database(database))?
         .build()
         .await?;
         
@@ -74,17 +95,22 @@ fn get_ibus_address() -> Result<String, Box<dyn std::error::Error>> {
     // Mirrors the logic in librush/ibus-rs
     let home = env::var("HOME")?;
     let machine_id = std::fs::read_to_string("/etc/machine-id")?.trim().to_string();
-    let display = env::var("DISPLAY").unwrap_or_else(|_| ":0".to_string());
-    let display_num = display.split(':').nth(1).and_then(|s| s.split('.').next()).unwrap_or("0");
     
-    let path = format!("{}/.config/ibus/bus/{}-unix-{}", home, machine_id, display_num);
-    let content = std::fs::read_to_string(path)?;
+    let path = format!("{}/.config/ibus/bus/", home);
+    let entries = std::fs::read_dir(path)?;
     
-    for line in content.lines() {
-        if let Some(addr) = line.strip_prefix("IBUS_ADDRESS=") {
-            return Ok(addr.to_string());
+    for entry in entries {
+        let entry = entry?;
+        let filename = entry.file_name().to_string_lossy().to_string();
+        if filename.starts_with(&machine_id) {
+            let content = std::fs::read_to_string(entry.path())?;
+            for line in content.lines() {
+                if let Some(addr) = line.strip_prefix("IBUS_ADDRESS=") {
+                    return Ok(addr.trim().to_string());
+                }
+            }
         }
     }
     
-    Err("Could not find IBUS_ADDRESS".into())
+    Err("Could not find IBUS_ADDRESS in any file".into())
 }
