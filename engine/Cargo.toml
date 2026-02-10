@@ -5,8 +5,8 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-ibus = "0.3"
-glib = "0.19"
+# PHASE 1: Minimal dependencies for build skeleton
+# PHASE 2: Will use ibus = "0.2.0" for IBus integration
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
