@@ -20,7 +20,7 @@ ui_binary = custom_target('emoji-input-ui',
     'sh', '-c',
     'cd "' + meson.current_source_dir() + '" && ' +
     cargo.full_path() + ' build ' + ' '.join(cargo_flags) + ' && ' +
-    'cp target/' + cargo_target_dir + '/emoji-input-ui "@OUTPUT@"'
+    'cp target/' + cargo_target_dir + '/emoji-input-ui "' + meson.current_build_dir() + '/emoji-input-ui"'
   ],
   install: true,
   install_dir: libexecdir,

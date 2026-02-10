@@ -8,7 +8,7 @@ license = "MIT"
 gtk4 = { version = "0.9", package = "gtk4" }
 glib = "0.20"
 zbus = { version = "5.1", features = ["tokio"] }
-zvariant = { version = "5.9", features = ["serde"] }
+zvariant = { version = "5.9" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.49", features = ["full"] }
