@@ -1,11 +1,16 @@
 # Data files installation
 
-# IBus component file (will be populated in PHASE 2)
+# IBus component file (dynamically configured in PHASE 2)
 ibus_component_dir = datadir / 'ibus' / 'component'
 if get_option('install_ibus_component')
-  install_data('ibus-component.xml',
-    install_dir: ibus_component_dir,
-    rename: 'emoji-input.xml'
+  conf_data = configuration_data()
+  conf_data.set('IBUS_ENGINE_PATH', get_option('prefix') / get_option('libexecdir') / 'emoji-input-engine')
+  
+  configure_file(
+    input: 'ibus-component.xml',
+    output: 'emoji-input.xml',
+    configuration: conf_data,
+    install_dir: ibus_component_dir
   )
 endif
 
