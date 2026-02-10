@@ -1,7 +1,7 @@
 option('install_ibus_component',
   type: 'boolean',
-  value: false,
-  description: 'Install IBus component file (enable in PHASE 2)'
+  value: true,
+  description: 'Install IBus component file (PHASE 2+)'
 )
 
 option('install_desktop_file',

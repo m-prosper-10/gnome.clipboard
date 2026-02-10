@@ -37,22 +37,22 @@
 
 ---
 
-## PHASE 2: Minimal IBus Engine (Headless)
+## PHASE 2: Minimal IBus Engine (Headless) 🚧 IN PROGRESS
 
 **Goal**: Register a valid IBus engine that can commit text.
 
 **⚠️ CRITICAL**: If this fails, stop. Everything depends on this.
 
-- [ ] Implement IBus engine in `engine/`
-  - [ ] Create engine main file
-  - [ ] Implement engine activation handler
-  - [ ] Implement key event handler
-  - [ ] Implement `commit_text()` function
+- [x] Implement IBus engine in `engine/`
+  - [x] Create engine main file
+  - [x] Implement engine activation handler (stub)
+  - [x] Implement key event handler (stub)
+  - [x] Implement `commit_text()` function (stub)
   - [ ] Add hardcoded test trigger (e.g., `:emoji:` → 🙂)
-- [ ] Create `ibus-component.xml`
-  - [ ] Define engine metadata
-  - [ ] Register engine with IBus
-  - [ ] Configure engine executable path
+- [x] Create `ibus-component.xml`
+  - [x] Define engine metadata
+  - [x] Register engine with IBus
+  - [x] Configure engine executable path
 - [ ] Integration testing
   - [ ] Verify engine appears in `ibus-setup`
   - [ ] Test engine selection
@@ -60,9 +60,11 @@
 
 **Deliverables**:
 
-- ✅ Engine shows up in `ibus-setup`
-- ✅ Selecting it allows typing
-- ✅ Pressing hardcoded key inserts single emoji
+- ✅ Engine shows up in `ibus-setup` (ready to test)
+- ⏳ Selecting it allows typing
+- ⏳ Pressing hardcoded key inserts single emoji
+
+**Status**: Engine compiles and runs. Component XML ready. Needs manual IBus testing.
 
 ---
 

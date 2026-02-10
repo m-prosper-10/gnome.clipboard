@@ -8,9 +8,17 @@ An input method engine (IME) that integrates with IBus to provide emoji insertio
 
 ## Project Status
 
-**Current Phase**: PHASE 1 - Repository + Build Skeleton
+**Current Phase**: PHASE 2 - Minimal IBus Engine (Headless)
 
-This project follows a phased development approach. See `docs/tasks.md` for the complete roadmap.
+**Completed Phases**:
+- ✅ PHASE 1: Repository + Build Skeleton
+
+**Current Status**:
+- Engine compiles and runs
+- IBus component registration ready
+- Awaiting manual testing in IBus
+
+See `docs/tasks.md` for the complete roadmap.
 
 ## Build Instructions
 
@@ -21,15 +29,16 @@ This project follows a phased development approach. See `docs/tasks.md` for the 
 - Rust toolchain (rustc + cargo)
 - IBus development files (>= 1.5.0)
 - GTK 4 (for future UI components)
+- GLib development files
 
 On Fedora/RHEL:
 ```bash
-sudo dnf install meson ninja-build rust cargo ibus-devel gtk4-devel
+sudo dnf install meson ninja-build rust cargo ibus-devel gtk4-devel glib2-devel
 ```
 
 On Ubuntu/Debian:
 ```bash
-sudo apt install meson ninja-build rustc cargo libibus-1.0-dev libgtk-4-dev
+sudo apt install meson ninja-build rustc cargo libibus-1.0-dev libgtk-4-dev libglib2.0-dev
 ```
 
 ### Building
@@ -39,11 +48,26 @@ meson setup build
 ninja -C build
 ```
 
+### Testing (PHASE 2)
+
+Test the engine without installing:
+```bash
+./scripts/test-phase2.sh
+```
+
+Register with IBus for testing:
+```bash
+./scripts/register-ibus.sh
+```
+
 ### Installing
 
 ```bash
 sudo ninja -C build install
+sudo ibus restart
 ```
+
+After installation, add "Emoji Input" in `ibus-setup`.
 
 ### Uninstalling
 
