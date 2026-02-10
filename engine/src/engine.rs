@@ -1,5 +1,6 @@
-// PHASE 2: IBus Engine Core Logic
-// This module will contain the actual engine implementation
+use librush::ibus::{IBusEngine, IBusEngineBackend, IBusModifierState};
+use xkeysym::{Keysym, KeyCode};
+use zbus::{fdo, object_server::SignalEmitter, ObjectServer};
 
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
@@ -81,6 +82,57 @@ impl EmojiEngine {
     pub fn disable(&mut self) {
         self.enabled = false;
         self.reset();
+    }
+}
+
+impl IBusEngine for EmojiEngine {
+    async fn process_key_event(
+        &mut self,
+        se: SignalEmitter<'_>,
+        _server: &ObjectServer,
+        keyval: Keysym,
+        _keycode: KeyCode,
+        state: IBusModifierState,
+    ) -> fdo::Result<bool> {
+        // Only handle key press events (ignore releases)
+        if state.release() {
+            return Ok(false);
+        }
+
+        let (handled, commit) = self.process_key_event(u32::from(keyval), 0, 0);
+        
+        if let Some(text) = commit {
+            let _ = Self::commit_text(&se, text).await;
+        }
+        
+        Ok(handled)
+    }
+
+    async fn enable(
+        &mut self,
+        _se: SignalEmitter<'_>,
+        _server: &ObjectServer,
+    ) -> fdo::Result<()> {
+        self.enable();
+        Ok(())
+    }
+
+    async fn disable(
+        &mut self,
+        _se: SignalEmitter<'_>,
+        _server: &ObjectServer,
+    ) -> fdo::Result<()> {
+        self.disable();
+        Ok(())
+    }
+
+    async fn reset(
+        &mut self,
+        _se: SignalEmitter<'_>,
+        _server: &ObjectServer,
+    ) -> fdo::Result<()> {
+        self.reset();
+        Ok(())
     }
 }
 
