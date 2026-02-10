@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_trigger_logic() {
         let mut engine = EmojiEngine::new();
-        engine.enable();
+        engine.internal_enable();
         
         // Type ':'
         let (handled, commit) = engine.internal_process_key_event(0x3a, 0, 0);

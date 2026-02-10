@@ -47,9 +47,10 @@ async fn main() -> ExitCode {
 
 async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     // Get IBus address from environment or file
-    let addr = env::var("IBUS_ADDRESS").or_else(|_| get_ibus_address())?;
+    let addr_str = env::var("IBUS_ADDRESS").or_else(|_| get_ibus_address())?;
+    let address: zbus::Address = addr_str.parse()?;
     
-    let connection: Connection = connection::Builder::address(addr.try_into()?)?
+    let connection: Connection = connection::Builder::address(address)?
         .name("org.freedesktop.IBus.EmojiInput")?
         .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
         .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::new())?

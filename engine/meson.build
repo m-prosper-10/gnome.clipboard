@@ -18,9 +18,9 @@ engine_binary = custom_target('emoji-input-engine',
   console: true,
   command: [
     'sh', '-c',
-    'cd ' + meson.current_source_dir() + ' && ' +
+    'cd "' + meson.current_source_dir() + '" && ' +
     cargo.full_path() + ' build ' + ' '.join(cargo_flags) + ' && ' +
-    'cp target/' + cargo_target_dir + '/emoji-input-engine @OUTPUT@'
+    'cp target/' + cargo_target_dir + '/emoji-input-engine "' + meson.current_build_dir() + '/emoji-input-engine"'
   ],
   install: true,
   install_dir: libexecdir,
