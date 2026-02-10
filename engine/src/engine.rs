@@ -1,8 +1,6 @@
 // PHASE 2: IBus Engine Core Logic
 // This module will contain the actual engine implementation
 
-use std::collections::HashMap;
-
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
     pub preedit: String,
@@ -18,7 +16,7 @@ impl EmojiEngine {
         }
     }
     
-    pub fn process_key_event(&mut self, keyval: u32, _keycode: u32, state: u32) -> bool {
+    pub fn process_key_event(&mut self, _keyval: u32, _keycode: u32, _state: u32) -> bool {
         // PHASE 2: Hardcoded test - detect ":emoji:" and commit 🙂
         // Returns true if the key was handled, false to pass through
         

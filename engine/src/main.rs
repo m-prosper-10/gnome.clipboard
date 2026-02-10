@@ -1,10 +1,8 @@
 // PHASE 2: Minimal IBus Engine Implementation
 // This is a hardcoded test implementation that commits a single emoji
 
-use gio::prelude::*;
 use glib;
 use std::env;
-use std::process;
 
 mod engine;
 
@@ -39,14 +37,14 @@ fn run_ibus_engine() {
     
     // Set up signal handlers
     let loop_clone = main_loop.clone();
-    let _source_id = glib::unix_signal_add(glib::signal::SIGINT, move || {
+    let _source_id = glib::unix_signal_add(libc::SIGINT, move || {
         println!("\nShutting down engine...");
         loop_clone.quit();
         glib::ControlFlow::Break
     });
     
     let loop_clone2 = main_loop.clone();
-    let _source_id2 = glib::unix_signal_add(glib::signal::SIGTERM, move || {
+    let _source_id2 = glib::unix_signal_add(libc::SIGTERM, move || {
         println!("\nShutting down engine...");
         loop_clone2.quit();
         glib::ControlFlow::Break
