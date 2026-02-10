@@ -1,6 +1,6 @@
-use librush::ibus::{IBusEngine, IBusEngineBackend, IBusModifierState};
-use xkeysym::{Keysym, KeyCode};
-use zbus::{fdo, object_server::SignalEmitter, ObjectServer};
+use zbus::{interface, fdo, object_server::SignalEmitter};
+use zvariant::{Value, OwnedValue};
+use std::collections::HashMap;
 
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
@@ -85,54 +85,62 @@ impl EmojiEngine {
     }
 }
 
-impl IBusEngine for EmojiEngine {
+#[interface(name = "org.freedesktop.IBus.Engine")]
+impl EmojiEngine {
     async fn process_key_event(
         &mut self,
-        se: SignalEmitter<'_>,
-        _server: &ObjectServer,
-        keyval: Keysym,
-        _keycode: KeyCode,
-        state: IBusModifierState,
+        #[zbus(signal_emitter)] se: SignalEmitter<'_>,
+        keyval: u32,
+        _keycode: u32,
+        state: u32,
     ) -> fdo::Result<bool> {
-        // Only handle key press events (ignore releases)
-        if state.release() {
+        // state & (1 << 30) is key release in IBus
+        if (state & (1 << 30)) != 0 {
             return Ok(false);
         }
 
-        let (handled, commit) = self.process_key_event(u32::from(keyval), 0, 0);
+        let (handled, commit) = self.process_key_event(keyval, 0, 0);
         
         if let Some(text) = commit {
-            let _ = Self::commit_text(&se, text).await;
+            let _ = self.commit_text(&se, text).await;
         }
         
         Ok(handled)
     }
 
-    async fn enable(
-        &mut self,
-        _se: SignalEmitter<'_>,
-        _server: &ObjectServer,
-    ) -> fdo::Result<()> {
+    async fn enable(&mut self) -> fdo::Result<()> {
         self.enable();
         Ok(())
     }
 
-    async fn disable(
-        &mut self,
-        _se: SignalEmitter<'_>,
-        _server: &ObjectServer,
-    ) -> fdo::Result<()> {
+    async fn disable(&mut self) -> fdo::Result<()> {
         self.disable();
         Ok(())
     }
 
-    async fn reset(
-        &mut self,
-        _se: SignalEmitter<'_>,
-        _server: &ObjectServer,
-    ) -> fdo::Result<()> {
+    async fn reset(&mut self) -> fdo::Result<()> {
         self.reset();
         Ok(())
+    }
+
+    #[zbus(signal)]
+    async fn commit_text(&self, #[zbus(signal_emitter)] se: SignalEmitter<'_>, text: String) -> zbus::Result<()>;
+
+    #[zbus(out_args = "text")]
+    async fn commit_text_signal_handler(se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
+        // IBusText is (sava{sv}) wrapped in a variant
+        let ibus_text = (text, Vec::<OwnedValue>::new(), HashMap::<String, OwnedValue>::new());
+        let variant = Value::from(ibus_text);
+        se.emit::<Self, Value>("CommitText", &variant).await
+    }
+}
+
+// Redefine commit_text to match IBus signal signature (taking a variant)
+impl EmojiEngine {
+    async fn commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
+        let ibus_text = (text, Vec::<OwnedValue>::new(), HashMap::<String, OwnedValue>::new());
+        let variant = Value::from(ibus_text);
+        se.emit_with_name("CommitText", &variant).await
     }
 }
 

@@ -1,4 +1,5 @@
-use librush::ibus::{self, IBus, IBusFactory};
+use zbus::{interface, ConnectionBuilder, fdo};
+use zvariant::ObjectPath;
 use std::env;
 use std::process::ExitCode;
 
@@ -7,9 +8,15 @@ use engine::EmojiEngine;
 
 struct EmojiFactory;
 
-impl IBusFactory<EmojiEngine> for EmojiFactory {
-    fn create_engine(&mut self, _name: String) -> Result<EmojiEngine, String> {
-        Ok(EmojiEngine::new())
+#[interface(name = "org.freedesktop.IBus.Factory")]
+impl EmojiFactory {
+    async fn create_engine(&self, _name: String) -> fdo::Result<ObjectPath<'static>> {
+        println!("IBus requested CreateEngine('{}')", _name);
+        // In a minimal implementation, we assume the engine is already registered 
+        // or we register it on the fly. 
+        // Standard IBus engines register a new engine object for each request.
+        // For simplicity, we'll use a fixed path for now.
+        Ok(ObjectPath::from_static_str("/org/freedesktop/IBus/Engine/1").unwrap())
     }
 }
 
@@ -39,20 +46,44 @@ async fn main() -> ExitCode {
 }
 
 async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = ibus::get_ibus_addr()?;
-    let factory = EmojiFactory;
+    // Get IBus address from environment or file
+    let addr = env::var("IBUS_ADDRESS").or_else(|_| get_ibus_address())?;
     
-    // The "name" here should match the engine name in ibus-component.xml
-    // but librush::IBus::new uses it for the DBus service name usually.
-    // IBus engines use a unique bus name like "org.freedesktop.IBus.EmojiInput"
-    let _ibus = IBus::new(addr, factory, "org.freedesktop.IBus.EmojiInput".to_string()).await?;
+    let connection = ConnectionBuilder::address(addr)?
+        .name("org.freedesktop.IBus.EmojiInput")?
+        .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
+        .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::new())?
+        .build()
+        .await?;
+        
+    println!("Engine process started. Serving Factory and Engine objects.");
+    println!("Bus: {}", connection.unique_name().map(|n| n.as_str()).unwrap_or("unknown"));
     
-    println!("Engine process started. Registered 'emoji-input' via librush.");
-    println!("Press Ctrl+C to stop.");
+    // Notify IBus daemon about our factory (usually done via RegisterComponent)
+    // For PHASE 2, we rely on the component XML pointing to this binary.
     
-    // Keep the process alive
     tokio::signal::ctrl_c().await?;
     println!("\nShutting down engine...");
     
     Ok(())
+}
+
+fn get_ibus_address() -> Result<String, Box<dyn std::error::Error>> {
+    // Basic implementation to find the address file if env var is missing
+    // Mirrors the logic in librush/ibus-rs
+    let home = env::var("HOME")?;
+    let machine_id = std::fs::read_to_string("/etc/machine-id")?.trim().to_string();
+    let display = env::var("DISPLAY").unwrap_or_else(|_| ":0".to_string());
+    let display_num = display.split(':').nth(1).and_then(|s| s.split('.').next()).unwrap_or("0");
+    
+    let path = format!("{}/.config/ibus/bus/{}-unix-{}", home, machine_id, display_num);
+    let content = std::fs::read_to_string(path)?;
+    
+    for line in content.lines() {
+        if let Some(addr) = line.strip_prefix("IBUS_ADDRESS=") {
+            return Ok(addr.to_string());
+        }
+    }
+    
+    Err("Could not find IBUS_ADDRESS".into())
 }
