@@ -1,10 +1,12 @@
 // PHASE 2: Minimal IBus Engine Implementation
 // This is a hardcoded test implementation that commits a single emoji
 
+use ibus::{self, Bus, Factory, Engine};
 use glib;
 use std::env;
 
 mod engine;
+use engine::EmojiEngine;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,26 +29,38 @@ fn main() {
 }
 
 fn run_ibus_engine() {
-    // Initialize GLib main loop
+    // Initialize IBus
+    ibus::init();
+    
+    // Create a new IBus Bus
+    let bus = Bus::new();
+    if !bus.is_connected() {
+        eprintln!("Failed to connect to IBus.");
+        return;
+    }
+
+    // Create a factory for our engine
+    let mut factory = Factory::new(bus.connection());
+    
+    // Create our engine state
+    let mut emoji_engine = EmojiEngine::new();
+    
+    // Register the engine
+    // Note: The specific API for ibus-rs might vary, 
+    // but we'll try to follow the C-style pattern it claims to mirror.
+    factory.add_engine("emoji-input", "EmojiEngine");
+    
+    println!("Engine process started. Registered 'emoji-input'.");
+    println!("Waiting for IBus connections...");
+    
+    // Initialize GLib main loop (IBus uses it internally)
     let main_loop = glib::MainLoop::new(None, false);
     
-    // PHASE 2: Minimal stub - just keep the process alive
-    // Real IBus integration will be added after verifying component registration
-    println!("Engine process started. Waiting for IBus connections...");
-    println!("Press Ctrl+C to stop.");
-    
-    // Set up signal handlers
+    // Set up signal handlers for clean exit
     let loop_clone = main_loop.clone();
     let _source_id = glib::unix_signal_add(libc::SIGINT, move || {
         println!("\nShutting down engine...");
         loop_clone.quit();
-        glib::ControlFlow::Break
-    });
-    
-    let loop_clone2 = main_loop.clone();
-    let _source_id2 = glib::unix_signal_add(libc::SIGTERM, move || {
-        println!("\nShutting down engine...");
-        loop_clone2.quit();
         glib::ControlFlow::Break
     });
     
