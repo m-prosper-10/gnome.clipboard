@@ -1,2 +1,25 @@
-<!-- PHASE 2: IBus component definition - not yet implemented -->
-<!-- This file will register the engine with IBus -->
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>org.example.EmojiInput</name>
+  <description>Emoji Input Method</description>
+  <exec>/usr/local/libexec/emoji-input-engine --ibus</exec>
+  <version>0.1.0</version>
+  <author>GNOME Emoji Input Manager</author>
+  <license>MIT</license>
+  <homepage>https://example.org</homepage>
+  <textdomain>emoji-input</textdomain>
+
+  <engines>
+    <engine>
+      <name>emoji-input</name>
+      <language>en</language>
+      <license>MIT</license>
+      <author>GNOME Emoji Input Manager</author>
+      <icon>input-keyboard</icon>
+      <layout>us</layout>
+      <longname>Emoji Input</longname>
+      <description>Emoji input method for GNOME</description>
+      <rank>0</rank>
+    </engine>
+  </engines>
+</component>
