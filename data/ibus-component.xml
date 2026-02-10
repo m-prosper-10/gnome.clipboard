@@ -2,7 +2,7 @@
 <component>
   <name>org.example.EmojiInput</name>
   <description>Emoji Input Method</description>
-  <exec>/usr/local/libexec/emoji-input-engine --ibus</exec>
+  <exec>@IBUS_ENGINE_PATH@ --ibus</exec>
   <version>0.1.0</version>
   <author>GNOME Emoji Input Manager</author>
   <license>MIT</license>
