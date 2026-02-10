@@ -3,7 +3,7 @@
 
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
-    pub preedit: String,
+    pub buffer: String,
     // Whether the engine is currently active
     pub enabled: bool,
 }
@@ -11,27 +11,66 @@ pub struct EmojiEngine {
 impl EmojiEngine {
     pub fn new() -> Self {
         EmojiEngine {
-            preedit: String::new(),
+            buffer: String::new(),
             enabled: false,
         }
     }
     
-    pub fn process_key_event(&mut self, _keyval: u32, _keycode: u32, _state: u32) -> bool {
-        // PHASE 2: Hardcoded test - detect ":emoji:" and commit 🙂
-        // Returns true if the key was handled, false to pass through
-        
-        // For now, just a placeholder
-        // Real implementation will:
-        // 1. Check if key is printable
-        // 2. Add to preedit buffer
-        // 3. Check for trigger sequence
-        // 4. Commit emoji when matched
-        
-        false
+    /// Processes a key event and returns an optional string to commit.
+    /// Returns (handled, commit_text)
+    pub fn process_key_event(&mut self, keyval: u32, _keycode: u32, _state: u32) -> (bool, Option<String>) {
+        if !self.enabled {
+            return (false, None);
+        }
+
+        // Check if it's a printable character (rough check for ASCII/Basic Latin)
+        // IBus keyvals for printable characters are usually their ASCII values
+        if (0x20..=0x7E).contains(&keyval) {
+            let c = (keyval as u8) as char;
+            self.buffer.push(c);
+            
+            // Check for trigger sequence ":emoji:"
+            if self.buffer.ends_with(":emoji:") {
+                self.buffer.clear();
+                return (true, Some("🙂".to_string()));
+            }
+            
+            // If it starts with ':', we handle it but don't commit yet
+            if self.buffer.starts_with(':') {
+                return (true, None);
+            } else {
+                // If it doesn't start with ':', clear and pass through
+                self.buffer.clear();
+                return (false, None);
+            }
+        }
+
+        // Handle Escape or Backspace
+        match keyval {
+            0xff1b => { // Esc
+                self.reset();
+                (true, None)
+            }
+            0xff08 => { // Backspace
+                if !self.buffer.is_empty() {
+                    self.buffer.pop();
+                    (true, None)
+                } else {
+                    (false, None)
+                }
+            }
+            _ => {
+                // For other keys, if we have a buffer, we might want to clear it
+                if !self.buffer.is_empty() {
+                    self.reset();
+                }
+                (false, None)
+            }
+        }
     }
     
     pub fn reset(&mut self) {
-        self.preedit.clear();
+        self.buffer.clear();
     }
     
     pub fn enable(&mut self) {
@@ -58,16 +97,34 @@ mod tests {
     #[test]
     fn test_engine_creation() {
         let engine = EmojiEngine::new();
-        assert_eq!(engine.preedit, "");
+        assert_eq!(engine.buffer, "");
         assert_eq!(engine.enabled, false);
     }
     
     #[test]
-    fn test_engine_enable_disable() {
+    fn test_trigger_logic() {
         let mut engine = EmojiEngine::new();
         engine.enable();
-        assert!(engine.enabled);
-        engine.disable();
-        assert!(!engine.enabled);
+        
+        // Type ':'
+        let (handled, commit) = engine.process_key_event(0x3a, 0, 0);
+        assert!(handled);
+        assert_eq!(commit, None);
+        assert_eq!(engine.buffer, ":");
+        
+        // Type 'e'
+        let (handled, commit) = engine.process_key_event(0x65, 0, 0);
+        assert!(handled);
+        assert_eq!(commit, None);
+        
+        // Finish ":emoji:"
+        for c in "moji".chars() {
+            engine.process_key_event(c as u32, 0, 0);
+        }
+        let (handled, commit) = engine.process_key_event(0x3a, 0, 0);
+        
+        assert!(handled);
+        assert_eq!(commit, Some("🙂".to_string()));
+        assert_eq!(engine.buffer, "");
     }
 }
