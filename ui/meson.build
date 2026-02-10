@@ -1,5 +1,27 @@
-# UI preferences app (stub for now)
-# Will be implemented in PHASE 6
+# Rust UI build using Cargo
+cargo = find_program('cargo', required: true)
 
-# For now, just create a placeholder to ensure build succeeds
-message('UI subproject: stub implementation')
+# Determine build profile
+if get_option('buildtype') == 'release'
+  cargo_flags = ['--release']
+  cargo_target_dir = 'release'
+else
+  cargo_flags = []
+  cargo_target_dir = 'debug'
+endif
+
+# Build and install the Rust UI
+ui_binary = custom_target('emoji-input-ui',
+  output: 'emoji-input-ui',
+  build_by_default: true,
+  build_always_stale: true,
+  console: true,
+  command: [
+    'sh', '-c',
+    'cd "' + meson.current_source_dir() + '" && ' +
+    cargo.full_path() + ' build ' + ' '.join(cargo_flags) + ' && ' +
+    'cp target/' + cargo_target_dir + '/emoji-input-ui "@OUTPUT@"'
+  ],
+  install: true,
+  install_dir: libexecdir,
+)

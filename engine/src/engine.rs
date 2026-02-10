@@ -3,7 +3,7 @@ use zvariant::Value;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
     pub char: String,
     pub name: String,
@@ -154,6 +154,14 @@ impl EmojiEngine {
         let visible = !self.buffer.is_empty();
         let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
 
+        // Emit search results if in composition
+        if visible && self.buffer.starts_with(':') {
+            let query = self.buffer.trim_start_matches(':');
+            let results = self.database.search(query);
+            let emojis: Vec<Emoji> = results.into_iter().cloned().collect();
+            let _ = self.emit_update_results(&se, emojis).await;
+        }
+
         if let Some(text) = commit {
             let _ = self.emit_commit_text(&se, text).await;
         }
@@ -186,6 +194,8 @@ impl EmojiEngine {
         cursor_pos: u32,
         visible: bool,
     ) -> zbus::Result<()>;
+    #[zbus(signal, name = "UpdateResults")]
+    async fn update_results_signal(se: &SignalEmitter<'_>, results: Vec<Emoji>) -> zbus::Result<()>;
 }
 
 impl EmojiEngine {
@@ -199,6 +209,10 @@ impl EmojiEngine {
         let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
         let variant = Value::from(ibus_text);
         Self::update_preedit_text_signal(se, variant.into(), cursor_pos, visible).await
+    }
+
+    async fn emit_update_results(&self, se: &SignalEmitter<'_>, results: Vec<Emoji>) -> zbus::Result<()> {
+        Self::update_results_signal(se, results).await
     }
 }
 
