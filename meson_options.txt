@@ -1,0 +1,17 @@
+option('install_ibus_component',
+  type: 'boolean',
+  value: false,
+  description: 'Install IBus component file (enable in PHASE 2)'
+)
+
+option('install_desktop_file',
+  type: 'boolean',
+  value: false,
+  description: 'Install desktop file (enable in PHASE 7)'
+)
+
+option('install_gschema',
+  type: 'boolean',
+  value: false,
+  description: 'Install GSettings schema (enable in PHASE 6)'
+)
