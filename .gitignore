@@ -9,6 +9,9 @@ engine/Cargo.lock
 ui/target/
 ui/Cargo.lock
 
+prefs/target/
+prefs/Cargo.lock
+
 # Editor files
 .vscode/
 .idea/
