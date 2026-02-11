@@ -23,6 +23,7 @@ ibus_dep = dependency('ibus-1.0', version: '>= 1.5.0')
 # Subprojects
 subdir('engine')
 subdir('ui')
+subdir('prefs')
 subdir('data')
 
 # Summary

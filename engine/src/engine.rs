@@ -8,6 +8,7 @@ pub struct Emoji {
     pub char: String,
     pub name: String,
     pub keywords: Vec<String>,
+    pub variants: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -16,18 +17,44 @@ pub struct EmojiDatabase {
     pub emojis: Vec<Emoji>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Settings {
+    pub trigger_char: String,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            trigger_char: ":".to_string(),
+        }
+    }
+}
+
 impl EmojiDatabase {
-    pub fn search(&self, query: &str) -> Vec<&Emoji> {
+    pub fn search(&self, query: &str, recents: &[String]) -> Vec<Emoji> {
         if query.is_empty() {
             return Vec::new();
         }
         
-        self.emojis.iter()
-            .filter(|e| {
-                e.name.starts_with(query) || 
-                e.keywords.iter().any(|k| k.starts_with(query))
-            })
-            .collect()
+        let mut results = Vec::new();
+        for e in &self.emojis {
+            if e.name.starts_with(query) || e.keywords.iter().any(|k| k.starts_with(query)) {
+                results.push(e.clone());
+                for v in &e.variants {
+                    let mut ve = e.clone();
+                    ve.char = v.clone();
+                    ve.variants = vec![]; // No nested variants
+                    results.push(ve);
+                }
+            }
+        }
+
+        // Sort by recents: emojis in recents list come first
+        results.sort_by_key(|e| {
+            recents.iter().position(|r| r == &e.char).unwrap_or(usize::MAX)
+        });
+
+        results
     }
 }
 
@@ -38,23 +65,101 @@ pub struct EmojiEngine {
     pub enabled: bool,
     // Emoji database
     pub database: EmojiDatabase,
+    // Current selection index in results
+    pub selected_index: usize,
+    // Recently used emoji characters
+    pub recents: Vec<String>,
+    // Settings (trigger character, etc.)
+    pub settings: Settings,
 }
 
 impl EmojiEngine {
     pub fn new() -> Self {
-        EmojiEngine {
+        let mut engine = EmojiEngine {
             buffer: String::new(),
             enabled: false,
             database: EmojiDatabase::default(),
-        }
+            selected_index: 0,
+            recents: Vec::new(),
+            settings: Settings::default(),
+        };
+        engine.load_recents();
+        engine.load_settings();
+        engine
     }
     
     pub fn with_database(database: EmojiDatabase) -> Self {
-        EmojiEngine {
+        let mut engine = EmojiEngine {
             buffer: String::new(),
             enabled: false,
             database,
+            selected_index: 0,
+            recents: Vec::new(),
+            settings: Settings::default(),
+        };
+        engine.load_recents();
+        engine.load_settings();
+        engine
+    }
+
+    fn get_config_path() -> Option<std::path::PathBuf> {
+        let home = std::env::var("HOME").ok()?;
+        let path = std::path::PathBuf::from(home)
+            .join(".config")
+            .join("gnome-emoji-input")
+            .join("settings.json");
+        Some(path)
+    }
+
+    pub fn load_settings(&mut self) {
+        if let Some(path) = Self::get_config_path() {
+            if let Ok(content) = std::fs::read_to_string(path) {
+                if let Ok(settings) = serde_json::from_str::<Settings>(&content) {
+                    self.settings = settings;
+                }
+            }
         }
+    }
+
+    fn get_recents_path() -> Option<std::path::PathBuf> {
+        let home = std::env::var("HOME").ok()?;
+        let path = std::path::PathBuf::from(home)
+            .join(".cache")
+            .join("gnome-emoji-input")
+            .join("recents.json");
+        
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        Some(path)
+    }
+
+    pub fn load_recents(&mut self) {
+        if let Some(path) = Self::get_recents_path() {
+            if let Ok(content) = std::fs::read_to_string(path) {
+                if let Ok(recents) = serde_json::from_str::<Vec<String>>(&content) {
+                    self.recents = recents;
+                }
+            }
+        }
+    }
+
+    pub fn save_recents(&self) {
+        if let Some(path) = Self::get_recents_path() {
+            if let Ok(content) = serde_json::to_string(&self.recents) {
+                let _ = std::fs::write(path, content);
+            }
+        }
+    }
+
+    pub fn record_usage(&mut self, char: String) {
+        // Remove if already present
+        self.recents.retain(|c| c != &char);
+        // Add to front
+        self.recents.insert(0, char);
+        // Keep only top 20
+        self.recents.truncate(20);
+        self.save_recents();
     }
     
     /// Processes a key event and returns an optional string to commit.
@@ -64,11 +169,13 @@ impl EmojiEngine {
             return (false, None);
         }
 
+        let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
+
         // Check if it's a printable character (rough check for ASCII/Basic Latin)
         if (0x20..=0x7E).contains(&keyval) {
             let c = (keyval as u8) as char;
             
-            if c == ':' && self.buffer.is_empty() {
+            if c == trigger && self.buffer.is_empty() {
                 self.buffer.push(c);
                 return (true, None);
             }
@@ -99,13 +206,36 @@ impl EmojiEngine {
                 }
             }
             0xff0d => { // Enter
-                if !self.buffer.is_empty() && self.buffer.starts_with(':') {
-                    let query = self.buffer.trim_start_matches(':');
-                    let results = self.database.search(query);
-                    if let Some(emoji) = results.first() {
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let results = self.database.search(query, &self.recents);
+                    if let Some(emoji) = results.get(self.selected_index) {
                         let text = emoji.char.clone();
+                        self.record_usage(text.clone());
                         self.internal_reset();
                         return (true, Some(text));
+                    }
+                }
+                (false, None)
+            }
+            0xff52 => { // Arrow Up
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        self.selected_index = (self.selected_index + count - 1) % count;
+                        return (true, None);
+                    }
+                }
+                (false, None)
+            }
+            0xff54 => { // Arrow Down
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        self.selected_index = (self.selected_index + 1) % count;
+                        return (true, None);
                     }
                 }
                 (false, None)
@@ -154,12 +284,18 @@ impl EmojiEngine {
         let visible = !self.buffer.is_empty();
         let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
 
+        let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
+
         // Emit search results if in composition
-        if visible && self.buffer.starts_with(':') {
-            let query = self.buffer.trim_start_matches(':');
-            let results = self.database.search(query);
-            let emojis: Vec<Emoji> = results.into_iter().cloned().collect();
-            let _ = self.emit_update_results(&se, emojis).await;
+        if visible && self.buffer.starts_with(trigger) {
+            let query = self.buffer.trim_start_matches(trigger);
+            let emojis = self.database.search(query, &self.recents);
+            // Reset selection if results count changed (simple heuristic)
+            let count = emojis.len();
+            if self.selected_index >= count && count > 0 {
+                self.selected_index = 0;
+            }
+            let _ = self.emit_update_results(&se, emojis, self.selected_index as u32).await;
         }
 
         if let Some(text) = commit {
@@ -195,7 +331,7 @@ impl EmojiEngine {
         visible: bool,
     ) -> zbus::Result<()>;
     #[zbus(signal, name = "UpdateResults")]
-    async fn update_results_signal(se: &SignalEmitter<'_>, results: Vec<Emoji>) -> zbus::Result<()>;
+    async fn update_results_signal(se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
 }
 
 impl EmojiEngine {
@@ -211,8 +347,8 @@ impl EmojiEngine {
         Self::update_preedit_text_signal(se, variant.into(), cursor_pos, visible).await
     }
 
-    async fn emit_update_results(&self, se: &SignalEmitter<'_>, results: Vec<Emoji>) -> zbus::Result<()> {
-        Self::update_results_signal(se, results).await
+    async fn emit_update_results(&self, se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()> {
+        Self::update_results_signal(se, results, selected_index).await
     }
 }
 
@@ -238,8 +374,8 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![] },
-                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![], variants: vec![] },
             ],
         };
         let mut engine = EmojiEngine::with_database(db);
@@ -269,19 +405,85 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![] },
-                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()], variants: vec![] },
             ],
         };
         
-        assert_eq!(db.search("smi").len(), 1);
-        assert_eq!(db.search("smi")[0].char, "🙂");
+        assert_eq!(db.search("smi", &[]).len(), 1);
+        assert_eq!(db.search("smi", &[])[0].char, "🙂");
         
         // Search by keyword
-        assert_eq!(db.search("hap").len(), 1);
-        assert_eq!(db.search("hap")[0].char, "😊");
+        assert_eq!(db.search("hap", &[]).len(), 1);
+        assert_eq!(db.search("hap", &[])[0].char, "😊");
         
         // No match
-        assert_eq!(db.search("xyz").len(), 0);
+        assert_eq!(db.search("xyz", &[]).len(), 0);
+    }
+
+    #[test]
+    fn test_variant_expansion() {
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji { 
+                    char: "👍".to_string(), 
+                    name: "thumbsup".to_string(), 
+                    keywords: vec![], 
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()] 
+                },
+            ],
+        };
+
+        let results = db.search("thumb", &[]);
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0].char, "👍");
+        assert_eq!(results[1].char, "👍🏻");
+        assert_eq!(results[2].char, "👍🏼");
+    }
+
+    #[test]
+    fn test_recents_prioritization() {
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji { char: "🙂".to_string(), name: "smile1".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "😊".to_string(), name: "smile2".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "😄".to_string(), name: "smile3".to_string(), keywords: vec![], variants: vec![] },
+            ],
+        };
+
+        // Initially sorted by database order
+        let results = db.search("smile", &[]);
+        assert_eq!(results[0].char, "🙂");
+        assert_eq!(results[1].char, "😊");
+
+        // Prioritize smile2
+        let results = db.search("smile", &["😊".to_string()]);
+        assert_eq!(results[0].char, "😊");
+        assert_eq!(results[1].char, "🙂");
+        assert_eq!(results[2].char, "😄");
+
+        // Prioritize smile3 then smile2
+        let results = db.search("smile", &["😄".to_string(), "😊".to_string()]);
+        assert_eq!(results[0].char, "😄");
+        assert_eq!(results[1].char, "😊");
+        assert_eq!(results[2].char, "🙂");
+    }
+
+    #[test]
+    fn test_recents_recording() {
+        let mut engine = EmojiEngine::new();
+        engine.recents = vec![];
+        
+        engine.record_usage("👍".to_string());
+        assert_eq!(engine.recents, vec!["👍".to_string()]);
+
+        engine.record_usage("❤️".to_string());
+        assert_eq!(engine.recents, vec!["❤️".to_string(), "👍".to_string()]);
+
+        // Move to front if repeated
+        engine.record_usage("👍".to_string());
+        assert_eq!(engine.recents, vec!["👍".to_string(), "❤️".to_string()]);
     }
 }
