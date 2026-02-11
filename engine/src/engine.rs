@@ -2,6 +2,7 @@ use zbus::{interface, fdo, object_server::SignalEmitter};
 use zvariant::Value;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use log::{info, error, debug, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
@@ -113,10 +114,19 @@ impl EmojiEngine {
 
     pub fn load_settings(&mut self) {
         if let Some(path) = Self::get_config_path() {
-            if let Ok(content) = std::fs::read_to_string(path) {
-                if let Ok(settings) = serde_json::from_str::<Settings>(&content) {
-                    self.settings = settings;
+            if path.exists() {
+                debug!("Loading settings from {:?}", path);
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => {
+                        match serde_json::from_str::<Settings>(&content) {
+                            Ok(settings) => self.settings = settings,
+                            Err(e) => warn!("Failed to parse settings at {:?}: {}. Using defaults.", path, e),
+                        }
+                    }
+                    Err(e) => error!("Failed to read settings file at {:?}: {}", path, e),
                 }
+            } else {
+                debug!("Settings file {:?} not found, using defaults.", path);
             }
         }
     }
@@ -136,9 +146,16 @@ impl EmojiEngine {
 
     pub fn load_recents(&mut self) {
         if let Some(path) = Self::get_recents_path() {
-            if let Ok(content) = std::fs::read_to_string(path) {
-                if let Ok(recents) = serde_json::from_str::<Vec<String>>(&content) {
-                    self.recents = recents;
+            if path.exists() {
+                debug!("Loading recents from {:?}", path);
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => {
+                        match serde_json::from_str::<Vec<String>>(&content) {
+                            Ok(recents) => self.recents = recents,
+                            Err(e) => warn!("Failed to parse recents at {:?}: {}. Starting fresh.", path, e),
+                        }
+                    }
+                    Err(e) => error!("Failed to read recents file at {:?}: {}", path, e),
                 }
             }
         }
@@ -146,8 +163,13 @@ impl EmojiEngine {
 
     pub fn save_recents(&self) {
         if let Some(path) = Self::get_recents_path() {
-            if let Ok(content) = serde_json::to_string(&self.recents) {
-                let _ = std::fs::write(path, content);
+            match serde_json::to_string(&self.recents) {
+                Ok(content) => {
+                    if let Err(e) = std::fs::write(&path, content) {
+                        error!("Failed to save recents to {:?}: {}", path, e);
+                    }
+                }
+                Err(e) => error!("Failed to serialize recents: {}", e),
             }
         }
     }
