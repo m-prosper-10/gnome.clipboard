@@ -3,6 +3,7 @@ use gtk4 as gtk;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::glib;
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::path::PathBuf;
@@ -57,7 +58,14 @@ fn get_recents_path() -> Option<PathBuf> {
     Some(path)
 }
 
-fn main() -> glib::ExitCode {
+#[tokio::main]
+async fn main() -> glib::ExitCode {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+    info!("Starting Preferences app v{}", env!("CARGO_PKG_VERSION"));
+
     let application = adw::Application::builder()
         .application_id("org.example.EmojiInputPrefs")
         .build();

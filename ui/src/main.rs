@@ -108,10 +108,17 @@ async fn main() -> glib::ExitCode {
                 }
             };
 
-            let conn = match zbus::connection::Builder::address(address).build().await {
-                Ok(c) => c,
+            let conn = match zbus::connection::Builder::address(address) {
+                Ok(b) => match b.build().await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        error!("Failed to build connection: {}", e);
+                        app.quit();
+                        return;
+                    }
+                },
                 Err(e) => {
-                    error!("Failed to connect to IBus at {}: {}", addr, e);
+                    error!("Failed to create connection builder: {}", e);
                     app.quit();
                     return;
                 }
