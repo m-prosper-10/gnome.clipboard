@@ -6,6 +6,9 @@ builddir/
 engine/target/
 engine/Cargo.lock
 
+ui/target/
+ui/Cargo.lock
+
 # Editor files
 .vscode/
 .idea/

@@ -1,8 +1,8 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
-use zbus::{Connection, proxy};
-use zvariant::Value;
+use zbus::proxy;
 use serde::{Deserialize, Serialize};
+use futures_util::stream::StreamExt;
 use std::env;
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
@@ -80,8 +80,7 @@ fn main() -> glib::ExitCode {
         // Run DBus listener in a separate task
         glib::MainContext::default().spawn_local(async move {
             let addr = get_ibus_address().expect("Could not find IBus address");
-            let conn = Connection::builder()
-                .address(addr.parse().expect("Invalid IBus address"))
+            let conn = zbus::connection::Builder::address(addr.parse::<zbus::Address>().expect("Invalid IBus address"))
                 .expect("Failed to create connection builder")
                 .build()
                 .await

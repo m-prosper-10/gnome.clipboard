@@ -80,11 +80,34 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     println!("Engine process started. Serving Factory and Engine objects.");
     println!("Bus: {}", connection.unique_name().map(|n| n.as_str()).unwrap_or("unknown"));
     
-    // Notify IBus daemon about our factory (usually done via RegisterComponent)
-    // For PHASE 2, we rely on the component XML pointing to this binary.
+    // Launch UI process
+    let current_exe = env::current_exe().ok();
+    let ui_path = current_exe.as_ref()
+        .and_then(|p| p.parent())
+        .map(|p| p.join("emoji-input-ui"))
+        .filter(|p| p.exists())
+        .map(|p| p.to_string_lossy().to_string())
+        .or_else(|| {
+            let path = "/usr/local/libexec/emoji-input-ui";
+            if std::path::Path::new(path).exists() {
+                Some(path.to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| {
+            // Local dev fallback
+            "./ui/target/debug/emoji-input-ui".to_string()
+        });
+
+    println!("Launching UI from: {}", ui_path);
+    let mut ui_child = std::process::Command::new(ui_path)
+        .spawn()
+        .expect("Failed to launch UI process");
     
     tokio::signal::ctrl_c().await?;
     println!("\nShutting down engine...");
+    let _ = ui_child.kill();
     
     Ok(())
 }
