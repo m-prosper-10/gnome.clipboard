@@ -10,6 +10,7 @@ pub struct Emoji {
     pub char: String,
     pub name: String,
     pub keywords: Vec<String>,
+    pub variants: Vec<String>,
 }
 
 #[proxy(
@@ -19,8 +20,9 @@ pub struct Emoji {
 )]
 trait EmojiEngine {
     #[zbus(signal)]
-    fn update_results(&self, results: Vec<Emoji>) -> zbus::Result<()>;
+    fn update_results(&self, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
 }
+
 
 fn get_ibus_address() -> Option<String> {
     if let Ok(addr) = env::var("IBUS_ADDRESS") {
@@ -50,7 +52,8 @@ fn get_ibus_address() -> Option<String> {
     None
 }
 
-fn main() -> glib::ExitCode {
+#[tokio::main]
+async fn main() -> glib::ExitCode {
     let application = gtk::Application::builder()
         .application_id("org.example.EmojiInputUI")
         .build();
@@ -76,9 +79,12 @@ fn main() -> glib::ExitCode {
 
         let window_clone = window.clone();
         let list_box_clone = list_box.clone();
+        let app_clone = app.clone();
 
-        // Run DBus listener in a separate task
+        // Run DBus listener on the main thread (local task)
+        // This is safe for GTK objects and has access to the Tokio reactor via #[tokio::main]
         glib::MainContext::default().spawn_local(async move {
+            let app = app_clone;
             let addr = get_ibus_address().expect("Could not find IBus address");
             let conn = zbus::connection::Builder::address(addr.parse::<zbus::Address>().expect("Invalid IBus address"))
                 .expect("Failed to create connection builder")
@@ -90,29 +96,44 @@ fn main() -> glib::ExitCode {
             let mut stream = proxy.receive_update_results().await.expect("Failed to receive stream");
 
             while let Some(signal) = stream.next().await {
-                let results = signal.args().expect("Failed to get signal args").results;
+                let args = signal.args().expect("Failed to get signal args");
+                let results = args.results;
+                let selected_index = args.selected_index as i32;
                 
                 // Update UI on main thread
                 let list_box = list_box_clone.clone();
                 let window = window_clone.clone();
                 
-                if results.is_empty() {
-                    window.hide();
-                } else {
-                    // Clear list
-                    while let Some(child) = list_box.first_child() {
-                        list_box.remove(&child);
+                glib::idle_add_local(move || {
+                    if results.is_empty() {
+                        window.hide();
+                    } else {
+                        // Clear list
+                        while let Some(child) = list_box.first_child() {
+                            list_box.remove(&child);
+                        }
+                        
+                        // Add results
+                        for emoji in &results {
+                            let label = gtk::Label::new(Some(&format!("{} :{}", emoji.char, emoji.name)));
+                            label.set_halign(gtk::Align::Start);
+                            list_box.append(&label);
+                        }
+                        
+                        // Select the row
+                        if let Some(row) = list_box.row_at_index(selected_index) {
+                            list_box.select_row(Some(&row));
+                            // Row might need focus to show selection style in some themes
+                            row.grab_focus();
+                        }
+
+                        window.show();
                     }
-                    
-                    // Add results
-                    for emoji in results {
-                        let label = gtk::Label::new(Some(&format!("{} :{}", emoji.char, emoji.name)));
-                        label.set_halign(gtk::Align::Start);
-                        list_box.append(&label);
-                    }
-                    window.show();
-                }
+                    glib::ControlFlow::Break
+                });
             }
+            println!("Engine stream ended, shutting down UI...");
+            app.quit();
         });
     });
 
