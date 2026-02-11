@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Emoji Input Settings
+Comment=Configure the GNOME Emoji Input Manager
+Exec=emoji-input-prefs
+Icon=org.gnome.EmojiSelection
+Terminal=false
+Type=Application
+Categories=Settings;GTK;
+Keywords=emoji;input;settings;
+StartupNotify=true

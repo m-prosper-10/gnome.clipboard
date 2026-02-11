@@ -6,8 +6,8 @@ option('install_ibus_component',
 
 option('install_desktop_file',
   type: 'boolean',
-  value: false,
-  description: 'Install desktop file (enable in PHASE 7)'
+  value: true,
+  description: 'Install desktop file (enable in Phase 7)'
 )
 
 option('install_gschema',

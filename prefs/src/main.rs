@@ -1,3 +1,5 @@
+use libadwaita as adw;
+use gtk4 as gtk;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gtk::glib;
@@ -91,7 +93,7 @@ fn main() -> glib::ExitCode {
             .text(&settings.trigger_char)
             .build();
         
-        trigger_row.connect_apply(move |row| {
+        trigger_row.connect_apply(move |row: &adw::EntryRow| {
             let mut s = load_settings();
             s.trigger_char = row.text().to_string();
             save_settings(&s);
