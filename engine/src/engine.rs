@@ -17,6 +17,19 @@ pub struct EmojiDatabase {
     pub emojis: Vec<Emoji>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Settings {
+    pub trigger_char: String,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            trigger_char: ":".to_string(),
+        }
+    }
+}
+
 impl EmojiDatabase {
     pub fn search(&self, query: &str, recents: &[String]) -> Vec<Emoji> {
         if query.is_empty() {
@@ -56,6 +69,8 @@ pub struct EmojiEngine {
     pub selected_index: usize,
     // Recently used emoji characters
     pub recents: Vec<String>,
+    // Settings (trigger character, etc.)
+    pub settings: Settings,
 }
 
 impl EmojiEngine {
@@ -66,8 +81,10 @@ impl EmojiEngine {
             database: EmojiDatabase::default(),
             selected_index: 0,
             recents: Vec::new(),
+            settings: Settings::default(),
         };
         engine.load_recents();
+        engine.load_settings();
         engine
     }
     
@@ -78,9 +95,30 @@ impl EmojiEngine {
             database,
             selected_index: 0,
             recents: Vec::new(),
+            settings: Settings::default(),
         };
         engine.load_recents();
+        engine.load_settings();
         engine
+    }
+
+    fn get_config_path() -> Option<std::path::PathBuf> {
+        let home = std::env::var("HOME").ok()?;
+        let path = std::path::PathBuf::from(home)
+            .join(".config")
+            .join("gnome-emoji-input")
+            .join("settings.json");
+        Some(path)
+    }
+
+    pub fn load_settings(&mut self) {
+        if let Some(path) = Self::get_config_path() {
+            if let Ok(content) = std::fs::read_to_string(path) {
+                if let Ok(settings) = serde_json::from_str::<Settings>(&content) {
+                    self.settings = settings;
+                }
+            }
+        }
     }
 
     fn get_recents_path() -> Option<std::path::PathBuf> {
@@ -131,11 +169,13 @@ impl EmojiEngine {
             return (false, None);
         }
 
+        let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
+
         // Check if it's a printable character (rough check for ASCII/Basic Latin)
         if (0x20..=0x7E).contains(&keyval) {
             let c = (keyval as u8) as char;
             
-            if c == ':' && self.buffer.is_empty() {
+            if c == trigger && self.buffer.is_empty() {
                 self.buffer.push(c);
                 return (true, None);
             }
@@ -166,8 +206,8 @@ impl EmojiEngine {
                 }
             }
             0xff0d => { // Enter
-                if !self.buffer.is_empty() && self.buffer.starts_with(':') {
-                    let query = self.buffer.trim_start_matches(':');
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
                     let results = self.database.search(query, &self.recents);
                     if let Some(emoji) = results.get(self.selected_index) {
                         let text = emoji.char.clone();
@@ -179,8 +219,8 @@ impl EmojiEngine {
                 (false, None)
             }
             0xff52 => { // Arrow Up
-                if !self.buffer.is_empty() {
-                    let query = self.buffer.trim_start_matches(':');
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
                     if count > 0 {
                         self.selected_index = (self.selected_index + count - 1) % count;
@@ -190,8 +230,8 @@ impl EmojiEngine {
                 (false, None)
             }
             0xff54 => { // Arrow Down
-                if !self.buffer.is_empty() {
-                    let query = self.buffer.trim_start_matches(':');
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
                     if count > 0 {
                         self.selected_index = (self.selected_index + 1) % count;
@@ -244,9 +284,11 @@ impl EmojiEngine {
         let visible = !self.buffer.is_empty();
         let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
 
+        let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
+
         // Emit search results if in composition
-        if visible && self.buffer.starts_with(':') {
-            let query = self.buffer.trim_start_matches(':');
+        if visible && self.buffer.starts_with(trigger) {
+            let query = self.buffer.trim_start_matches(trigger);
             let emojis = self.database.search(query, &self.recents);
             // Reset selection if results count changed (simple heuristic)
             let count = emojis.len();
