@@ -4,6 +4,7 @@ use zbus::proxy;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
 use std::env;
+use log::{info, error, debug, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
@@ -54,6 +55,11 @@ fn get_ibus_address() -> Option<String> {
 
 #[tokio::main]
 async fn main() -> glib::ExitCode {
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+
     let application = gtk::Application::builder()
         .application_id("org.example.EmojiInputUI")
         .build();
@@ -82,25 +88,67 @@ async fn main() -> glib::ExitCode {
         let app_clone = app.clone();
 
         // Run DBus listener on the main thread (local task)
-        // This is safe for GTK objects and has access to the Tokio reactor via #[tokio::main]
         glib::MainContext::default().spawn_local(async move {
             let app = app_clone;
-            let addr = get_ibus_address().expect("Could not find IBus address");
-            let conn = zbus::connection::Builder::address(addr.parse::<zbus::Address>().expect("Invalid IBus address"))
-                .expect("Failed to create connection builder")
-                .build()
-                .await
-                .expect("Failed to connect to IBus");
+            let addr = match get_ibus_address() {
+                Some(a) => a,
+                None => {
+                    error!("Could not find IBus address. Is IBus running?");
+                    app.quit();
+                    return;
+                }
+            };
+            
+            let address: zbus::Address = match addr.parse() {
+                Ok(a) => a,
+                Err(e) => {
+                    error!("Invalid IBus address '{}': {}", addr, e);
+                    app.quit();
+                    return;
+                }
+            };
 
-            let proxy = EmojiEngineProxy::new(&conn).await.expect("Failed to create proxy");
-            let mut stream = proxy.receive_update_results().await.expect("Failed to receive stream");
+            let conn = match zbus::connection::Builder::address(address).build().await {
+                Ok(c) => c,
+                Err(e) => {
+                    error!("Failed to connect to IBus at {}: {}", addr, e);
+                    app.quit();
+                    return;
+                }
+            };
+
+            let proxy = match EmojiEngineProxy::new(&conn).await {
+                Ok(p) => p,
+                Err(e) => {
+                    error!("Failed to create EmojiEngine proxy: {}", e);
+                    app.quit();
+                    return;
+                }
+            };
+
+            let mut stream = match proxy.receive_update_results().await {
+                Ok(s) => s,
+                Err(e) => {
+                    error!("Failed to receive update_results stream: {}", e);
+                    app.quit();
+                    return;
+                }
+            };
+
+            info!("Connected to IBus engine. Listening for signals...");
 
             while let Some(signal) = stream.next().await {
-                let args = signal.args().expect("Failed to get signal args");
+                let args = match signal.args() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        warn!("Failed to get signal args: {}", e);
+                        continue;
+                    }
+                };
                 let results = args.results;
                 let selected_index = args.selected_index as i32;
                 
-                // Update UI on main thread
+                debug!("Received {} results, selected_index: {}", results.len(), selected_index);
                 let list_box = list_box_clone.clone();
                 let window = window_clone.clone();
                 
@@ -132,7 +180,7 @@ async fn main() -> glib::ExitCode {
                     glib::ControlFlow::Break
                 });
             }
-            println!("Engine stream ended, shutting down UI...");
+            info!("Engine stream ended, shutting down UI...");
             app.quit();
         });
     });

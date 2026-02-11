@@ -14,9 +14,9 @@ if get_option('install_ibus_component')
   )
 endif
 
-# Desktop file (will be populated in PHASE 7)
+# Desktop file
 if get_option('install_desktop_file')
-  install_data('org.example.EmojiInput.desktop',
+  install_data('org.example.EmojiInputPrefs.desktop',
     install_dir: datadir / 'applications'
   )
 endif

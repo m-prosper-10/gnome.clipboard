@@ -2,6 +2,7 @@ use zbus::{interface, connection, fdo, Connection};
 use zvariant::ObjectPath;
 use std::env;
 use std::process::ExitCode;
+use log::{info, error, debug, warn};
 
 mod engine;
 use engine::EmojiEngine;
@@ -11,30 +12,30 @@ struct EmojiFactory;
 #[interface(name = "org.freedesktop.IBus.Factory")]
 impl EmojiFactory {
     async fn create_engine(&self, _name: String) -> fdo::Result<ObjectPath<'static>> {
-        println!("IBus requested CreateEngine('{}')", _name);
-        // In a minimal implementation, we assume the engine is already registered 
-        // or we register it on the fly. 
-        // Standard IBus engines register a new engine object for each request.
-        // For simplicity, we'll use a fixed path for now.
-        Ok(ObjectPath::from_static_str("/org/freedesktop/IBus/Engine/1").unwrap())
+        info!("IBus requested CreateEngine('{}')", _name);
+        Ok(ObjectPath::from_static_str("/org/freedesktop/IBus/Engine/1").expect("Static path should be valid"))
     }
 }
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    // Initialize env_logger with a default level if not set
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+
     let args: Vec<String> = env::args().collect();
     
     if args.len() > 1 && args[1] == "--ibus" {
-        // IBus mode - run as an input method engine
-        println!("Starting emoji-input-engine in IBus mode...");
+        info!("Starting emoji-input-engine in IBus mode...");
         if let Err(e) = run_ibus_engine().await {
-            eprintln!("Error running IBus engine: {:?}", e);
+            error!("Fatal error running IBus engine: {}", e);
             return ExitCode::FAILURE;
         }
     } else {
-        // Standalone mode - just print version info
         println!("emoji-input-engine v{}", env!("CARGO_PKG_VERSION"));
-        println!("PHASE 3: Composition Buffer + Search Core");
+        println!("PHASE 8: Hardening");
         println!();
         println!("To use as IBus engine:");
         println!("  1. Copy ibus-component.xml to ~/.local/share/ibus/component/");
@@ -47,8 +48,9 @@ async fn main() -> ExitCode {
 
 async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     // Load emoji database
+    let prefix = env::var("PREFIX").unwrap_or_else(|_| "/home/polo/.local".to_string());
     let db_path = env::var("EMOJI_DATA_DIR")
-        .unwrap_or_else(|_| "/usr/local/share/gnome-emoji-input".to_string());
+        .unwrap_or_else(|_| format!("{}/share/gnome-emoji-input", prefix));
     let db_file = format!("{}/emojis.json", db_path);
     
     // Fallback to local data dir for development if not found
@@ -58,17 +60,22 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         "data/emojis.json".to_string()
     };
     
-    println!("Loading emoji database from: {}", db_file);
-    let db_content = std::fs::read_to_string(db_file)?;
-    let database: engine::EmojiDatabase = serde_json::from_str(&db_content)?;
-    println!("Loaded {} emojis.", database.emojis.len());
+    info!("Loading emoji database from: {}", db_file);
+    let db_content = std::fs::read_to_string(&db_file)
+        .map_err(|e| format!("Failed to read emoji database {}: {}", db_file, e))?;
+    let database: engine::EmojiDatabase = serde_json::from_str(&db_content)
+        .map_err(|e| format!("Failed to parse emoji database: {}", e))?;
+    info!("Loaded {} emojis.", database.emojis.len());
 
     let addr_str = env::var("IBUS_ADDRESS")
         .ok()
         .filter(|s| !s.is_empty())
         .or_else(|| get_ibus_address().ok())
-        .ok_or_else(|| "Could not find IBUS_ADDRESS".to_string())?;
-    let address: zbus::Address = addr_str.parse()?;
+        .ok_or_else(|| "Could not find IBUS_ADDRESS. Is IBus running?".to_string())?;
+    
+    debug!("Connecting to IBus at {}", addr_str);
+    let address: zbus::Address = addr_str.parse()
+        .map_err(|e| format!("Invalid IBus address '{}': {}", addr_str, e))?;
     
     let connection: Connection = connection::Builder::address(address)?
         .name("org.freedesktop.IBus.EmojiInput")?
@@ -77,37 +84,44 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .await?;
         
-    println!("Engine process started. Serving Factory and Engine objects.");
-    println!("Bus: {}", connection.unique_name().map(|n| n.as_str()).unwrap_or("unknown"));
+    info!("Engine process started. Unique name: {}", 
+        connection.unique_name().map(|n| n.as_str()).unwrap_or("none"));
     
     // Launch UI process
     let current_exe = env::current_exe().ok();
-    let ui_path = current_exe.as_ref()
-        .and_then(|p| p.parent())
-        .map(|p| p.join("emoji-input-ui"))
+    let bin_dir = current_exe.as_ref().and_then(|p| p.parent());
+    
+    let ui_path = bin_dir.map(|bit| bit.join("emoji-input-ui"))
         .filter(|p| p.exists())
-        .map(|p| p.to_string_lossy().to_string())
         .or_else(|| {
-            let path = "/usr/local/libexec/emoji-input-ui";
-            if std::path::Path::new(path).exists() {
-                Some(path.to_string())
-            } else {
-                None
-            }
+            let path = format!("{}/libexec/emoji-input-ui", prefix);
+            let p = std::path::PathBuf::from(&path);
+            if p.exists() { Some(p) } else { None }
         })
-        .unwrap_or_else(|| {
-            // Local dev fallback
-            "./ui/target/debug/emoji-input-ui".to_string()
+        .or_else(|| {
+            let p = std::path::PathBuf::from("./ui/target/debug/emoji-input-ui");
+            if p.exists() { Some(p) } else { None }
         });
 
-    println!("Launching UI from: {}", ui_path);
-    let mut ui_child = std::process::Command::new(ui_path)
-        .spawn()
-        .expect("Failed to launch UI process");
+    let mut ui_child = if let Some(path) = ui_path {
+        info!("Launching UI from: {:?}", path);
+        match std::process::Command::new(&path).spawn() {
+            Ok(child) => Some(child),
+            Err(e) => {
+                error!("Failed to launch UI process at {:?}: {}", path, e);
+                None
+            }
+        }
+    } else {
+        warn!("UI binary 'emoji-input-ui' not found. Popup will not appear.");
+        None
+    };
     
     tokio::signal::ctrl_c().await?;
-    println!("\nShutting down engine...");
-    let _ = ui_child.kill();
+    info!("Shutting down engine...");
+    if let Some(mut child) = ui_child {
+        let _ = child.kill();
+    }
     
     Ok(())
 }
