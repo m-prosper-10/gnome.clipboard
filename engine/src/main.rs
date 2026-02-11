@@ -48,7 +48,10 @@ async fn main() -> ExitCode {
 
 async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     // Load emoji database
-    let prefix = env::var("PREFIX").unwrap_or_else(|_| "/home/polo/.local".to_string());
+    let prefix = env::var("PREFIX").unwrap_or_else(|_| {
+        let home = env::var("HOME").unwrap_or_else(|_| "/usr/local".to_string());
+        format!("{}/.local", home)
+    });
     let db_path = env::var("EMOJI_DATA_DIR")
         .unwrap_or_else(|_| format!("{}/share/gnome-emoji-input", prefix));
     let db_file = format!("{}/emojis.json", db_path);

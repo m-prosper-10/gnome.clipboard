@@ -1,111 +1,68 @@
 # GNOME Emoji Input Manager
 
-A native IBus-based emoji input method for GNOME, designed for keyboard-driven workflow.
+A modern, fast, and native emoji input manager for GNOME, integrating seamlessly with IBus and featuring a beautiful GTK4/Libadwaita interface.
 
-## What This Is
+## Features
 
-An input method engine (IME) that integrates with IBus to provide emoji insertion across all applications. Unlike GNOME Shell extensions, this works at the input stack level, making it stable and desktop-environment agnostic.
-
-## Project Status
-
-**Current Phase**: PHASE 2 - Minimal IBus Engine (Headless)
-
-**Completed Phases**:
-- ✅ PHASE 1: Repository + Build Skeleton
-
-**Current Status**:
-- Engine compiles and runs
-- IBus component registration ready
-- Awaiting manual testing in IBus
-
-See `docs/tasks.md` for the complete roadmap.
-
-## Build Instructions
-
-### Prerequisites
-
-- Meson (>= 0.59.0)
-- Ninja
-- Rust toolchain (rustc + cargo)
-- IBus development files (>= 1.5.0)
-- GTK 4 (for future UI components)
-- GLib development files
-
-On Fedora/RHEL:
-```bash
-sudo dnf install meson ninja-build rust cargo ibus-devel gtk4-devel glib2-devel
-```
-
-On Ubuntu/Debian:
-```bash
-sudo apt install meson ninja-build rustc cargo libibus-1.0-dev libgtk-4-dev libglib2.0-dev
-```
-
-### Building
-
-```bash
-meson setup build
-ninja -C build
-```
-
-### Testing (PHASE 2)
-
-Test the engine without installing:
-```bash
-./scripts/test-phase2.sh
-```
-
-Register with IBus for testing:
-```bash
-./scripts/register-ibus.sh
-```
-
-### Installing
-
-```bash
-sudo ninja -C build install
-sudo ibus restart
-```
-
-After installation, add "Emoji Input" in `ibus-setup`.
-
-### Uninstalling
-
-```bash
-sudo ninja -C build uninstall
-```
-
-Or use the provided script:
-```bash
-sudo ./scripts/uninstall.sh
-```
+- **Trigger Character**: Swiftly insert emojis using a customizable trigger character (default `:`).
+- **Searchable**: Real-time emoji search as you type.
+- **Recently Used**: Remembers your favorite emojis and puts them at the top of the list.
+- **Emoji Variants**: Support for skin tones and other variants, easily accessible in the picker.
+- **GTK4/Libadwaita UI**: A native-feeling popup and a dedicated preferences app.
+- **IBus Integration**: Works as a standard input method in the GNOME desktop.
 
 ## Architecture
 
-- **engine/**: Rust-based IBus engine (core input method logic)
-- **ui/**: GTK 4 preferences application (settings management)
-- **data/**: Configuration files, emoji database, desktop integration
-- **scripts/**: Installation and maintenance utilities
+The project consists of three main components:
 
-## Philosophy
+1.  **Engine** (`emoji-input-engine`): The core IBus logic and emoji search engine.
+2.  **UI** (`emoji-input-ui`): The GTK4 popup that appears when you type the trigger character.
+3.  **Prefs** (`emoji-input-prefs`): The Libadwaita preferences app for customization.
 
-- **CLI-first**: Every feature must work from the keyboard
-- **Single repository**: No split packages or complex dependencies
-- **Respect the stack**: Work with IBus, not against it
-- **No premature polish**: Functionality before aesthetics
-- **Compile or die**: If it doesn't build, it doesn't exist
+## Installation
+
+### Prerequisites
+
+- Rust (latest stable)
+- Meson & Ninja
+- GTK4 & Libadwaita development headers
+- IBus (installed and running)
+
+### Build and Install
+
+```bash
+# Setup the build directory
+meson setup build --prefix=$HOME/.local
+
+# Build and install
+ninja -C build install
+
+# Restart IBus to pick up the new component
+ibus restart
+```
+
+### Setup in GNOME
+
+1. Open **Settings** -> **Keyboard** -> **Input Sources**.
+2. Click **+** -> **Other** -> **Emoji Input**.
+3. (Optional) Run `emoji-input-prefs` to change the trigger character or clear history.
+
+## Usage
+
+1. Switch to the **Emoji Input** source.
+2. Type `:` followed by the name of an emoji (e.g., `:smile`).
+3. Use **Up/Down Arrows** to select the emoji.
+4. Press **Enter** to insert it.
+5. Press **Esc** or **Backspace** to cancel.
+
+## Debugging
+
+To see detailed logs, run the engine or UI with the `RUST_LOG` environment variable:
+
+```bash
+RUST_LOG=debug emoji-input-engine --ibus
+```
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Contributing
-
-This project is in early development. See `docs/tasks.md` for the implementation roadmap.
-
-## Non-Goals
-
-- ❌ GNOME Shell extensions
-- ❌ Wayland protocol hacks
-- ❌ Windows/macOS feature parity
-- ❌ Unnecessary dependencies
+MIT
