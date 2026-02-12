@@ -3,7 +3,7 @@ use zvariant::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use log::{info, error, debug, warn};
+use log::{error, debug, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {

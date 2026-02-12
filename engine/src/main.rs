@@ -90,7 +90,8 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .name("org.example.EmojiInput.Picker")?
         .build()
         .await?;
-    let session_emitter = SignalEmitter::new(&session_conn, "/org/example/EmojiInput/Picker");
+    let session_emitter = SignalEmitter::new(&session_conn, "/org/example/EmojiInput/Picker")
+        .expect("Failed to create signal emitter");
 
     let picker_task = tokio::spawn(async move {
         while let Some((results, selected_index)) = picker_rx.recv().await {
