@@ -155,7 +155,14 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
                 return;
             }
         };
-        let ibus_conn = match connection::Builder::address(addr).build().await {
+        let builder = match connection::Builder::address(addr) {
+            Ok(b) => b,
+            Err(e) => {
+                error!("Bridge: invalid IBus address: {}", e);
+                return;
+            }
+        };
+        let ibus_conn = match builder.build().await {
             Ok(c) => c,
             Err(e) => {
                 error!("Bridge: failed to connect to IBus: {}", e);
@@ -192,7 +199,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
             if p.exists() { Some(p) } else { None }
         });
 
-    let mut ui_child = if let Some(path) = ui_path {
+    let ui_child = if let Some(path) = ui_path {
         info!("Launching UI from: {:?}", path);
         match std::process::Command::new(&path).spawn() {
             Ok(child) => Some(child),

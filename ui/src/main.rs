@@ -49,8 +49,6 @@ async fn main() -> glib::ExitCode {
             .decorated(false)
             .can_focus(false)
             .build();
-        window.set_accept_focus(false);
-
         let list_box = gtk::ListBox::builder()
             .margin_top(10)
             .margin_bottom(10)

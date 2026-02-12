@@ -94,6 +94,7 @@ impl EmojiEngine {
         engine
     }
 
+    #[allow(dead_code)]
     pub fn with_database(database: EmojiDatabase) -> Self {
         Self::with_database_and_picker(database, None)
     }
