@@ -1,0 +1,1257 @@
+language: Ipulo
+  xkb:cm:qwerty:ass - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:ass - Cameroon (AZERTY, intl.)
+language: Akan
+  xkb:gh:akan:aka - Akan
+language: Hawaiian
+  xkb:us:haw:haw - Hawaiian
+language: Nugunu (Cameroon)
+  xkb:cm:qwerty:yas - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:yas - Cameroon (AZERTY, intl.)
+language: Serbian
+  xkb:me:latinunicode:srp - Montenegrin (Latin, Unicode)
+  xkb:me:latinyz:srp - Montenegrin (Latin, QWERTY)
+  xkb:rs:latinalternatequotes:srp - Serbian (Latin, with guillemets)
+  xkb:rs:latinunicode:srp - Serbian (Latin, Unicode)
+  xkb:rs:latinyz:srp - Serbian (Latin, QWERTY)
+  xkb:me:cyrillic:srp - Montenegrin (Cyrillic)
+  xkb:ru:srp:srp - Serbian (Russia)
+  xkb:rs:yz:srp - Serbian (Cyrillic, ZE and ZHE swapped)
+  xkb:me:latinalternatequotes:srp - Montenegrin (Latin, with guillemets)
+  xkb:rs:alternatequotes:srp - Serbian (Cyrillic, with guillemets)
+  xkb:rs::srp - Serbian
+  xkb:me::srp - Montenegrin
+  xkb:rs:latin:srp - Serbian (Latin)
+  xkb:rs:latinunicodeyz:srp - Serbian (Latin, Unicode, QWERTY)
+  xkb:me:latinunicodeyz:srp - Montenegrin (Latin, Unicode, QWERTY)
+  xkb:us:hbs:srp - Serbo-Croatian (US)
+  xkb:me:cyrillicalternatequotes:srp - Montenegrin (Cyrillic, with guillemets)
+  xkb:me:cyrillicyz:srp - Montenegrin (Cyrillic, ZE and ZHE swapped)
+language: Hdi
+  xkb:cm:qwerty:xed - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:xed - Cameroon (AZERTY, intl.)
+language: Ga
+  xkb:gh:ga:gaa - Ga
+language: Mofu, North
+  xkb:cm:qwerty:mfk - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:mfk - Cameroon (AZERTY, intl.)
+language: Albanian
+  xkb:al:plisi:sqi - Albanian (Plisi)
+  xkb:al:veqilharxhi:sqi - Albanian (Veqilharxhi)
+  xkb:al::sqi - Albanian
+language: Other
+  xkb:ph:dvorak:phi - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:phi - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:phi - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::phi - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:phi - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:phi - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:phi - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:phi - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:phi - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:phi - Filipino (Capewell-Dvorak, Latin)
+language: Garhwali
+  xkb:in::gbm - Indian
+language: Hindi
+  xkb:in:hin-kagapa:hin - Hindi (KaGaPa, phonetic)
+  xkb:in::hin - Indian
+  xkb:in:hin-wx:hin - Hindi (Wx)
+  xkb:in:bolnagri:hin - Hindi (Bolnagri)
+language: Makaa
+  xkb:cm:qwerty:mcp - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:mcp - Cameroon (AZERTY, intl.)
+language: Lao
+  xkb:la::lao - Lao
+  xkb:la:stea:lao - Lao (STEA)
+language: Bafut
+  xkb:cm:qwerty:bfd - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:bfd - Cameroon (AZERTY, intl.)
+language: Esperanto
+  xkb:br:nativo-epo:epo - Esperanto (Brazil, Nativo)
+  xkb:epo:legacy:epo - Esperanto (legacy)
+  xkb:pt:nativo-epo:epo - Esperanto (Portugal, Nativo)
+  xkb:epo::epo - Esperanto
+language: Rukai
+  xkb:tw:indigenous:dru - Taiwanese (indigenous)
+language: Mon
+  xkb:mm:mnw-a1:mnw - Mon (A1)
+  xkb:mm:mnw:mnw - Mon
+language: Vietnamese
+  xkb:vn::vie - Vietnamese
+  xkb:vn:us:vie - Vietnamese (US)
+  xkb:vn:fr:vie - Vietnamese (France)
+language: Bodo (India)
+  xkb:in::brx - Indian
+language: Other
+  xkb:tw::fox - Taiwanese
+language: Inuktitut
+  xkb:ca:ike:iku - Inuktitut
+language: Kanauji
+  xkb:in::bjj - Indian
+language: Danish
+  xkb:dk:mac_nodeadkeys:dan - Danish (Macintosh, no dead keys)
+  xkb:dk:dvorak:dan - Danish (Dvorak)
+  xkb:dk:nodeadkeys:dan - Danish (no dead keys)
+  xkb:dk:mac:dan - Danish (Macintosh)
+  xkb:dk:winkeys:dan - Danish (Windows)
+  xkb:dk::dan - Danish
+language: Pangasinan
+  xkb:ph:dvorak-bay:pag - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:pag - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:pag - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:pag - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:pag - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::pag - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:pag - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:pag - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:pag - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:pag - Filipino (Capewell-QWERF 2006, Latin)
+language: English
+  xkb:gb:colemak_dh:eng - English (UK, Colemak-DH)
+  xkb:gb:dvorakukp:eng - English (UK, Dvorak, with UK punctuation)
+  xkb:cm:dvorak:eng - Cameroon (Dvorak, intl.)
+  xkb:ph::eng - Filipino
+  xkb:us:intl:eng - English (US, intl., with dead keys)
+  xkb:us:alt-intl:eng - English (US, alt. intl.)
+  xkb:us:dvp:eng - English (programmer Dvorak)
+  xkb:us:colemak_dh:eng - English (Colemak-DH)
+  xkb:gb:mac:eng - English (UK, Macintosh)
+  xkb:in:iipa:eng - Indic IPA
+  xkb:us:dvorak:eng - English (Dvorak)
+  xkb:us:altgr-intl:eng - English (intl., with AltGr dead keys)
+  xkb:gb:dvorak:eng - English (UK, Dvorak)
+  xkb:gh::eng - English (Ghana)
+  xkb:ph:colemak:eng - Filipino (Colemak, Latin)
+  xkb:gb::eng - English (UK)
+  xkb:ph:capewell-qwerf2k6:eng - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:au::eng - English (Australia)
+  xkb:us:mac-iso:eng - English (Macintosh, ABC, ISO)
+  xkb:cm:mmuock:eng - Mmuock
+  xkb:us:symbolic:eng - English (US, Symbolic)
+  xkb:gb:mac_intl:eng - English (UK, Macintosh, intl.)
+  xkb:gb:intl:eng - English (UK, intl., with dead keys)
+  xkb:za::eng - English (South Africa)
+  xkb:cm::eng - English (Cameroon)
+  xkb:ml:us-intl:eng - English (Mali, US, intl.)
+  xkb:gb:gla:eng - Scottish Gaelic
+  xkb:us:colemak_dh_wide:eng - English (Colemak-DH Wide)
+  xkb:us:mac:eng - English (Macintosh, ABC, ANSI)
+  xkb:us:colemak:eng - English (Colemak)
+  xkb:ph:capewell-dvorak:eng - Filipino (Capewell-Dvorak, Latin)
+  xkb:gh:gillbt:eng - English (Ghana, GILLBT)
+  xkb:us:dvorak-alt-intl:eng - English (Dvorak, alt. intl.)
+  xkb:cm:qwerty:eng - Cameroon Multilingual (QWERTY, intl.)
+  xkb:gh:generic:eng - English (Ghana, multilingual)
+  xkb:us:dvorak-mac:eng - English (Dvorak, Macintosh, ANSI)
+  xkb:in:eng:eng - English (India, with rupee)
+  xkb:us:workman:eng - English (Workman)
+  xkb:us:euro:eng - English (US, euro on 5)
+  xkb:ie:UnicodeExpert:eng - Irish (UnicodeExpert)
+  xkb:ph:dvorak:eng - Filipino (Dvorak, Latin)
+  xkb:us:olpc2:eng - English (the divide/multiply toggle the layout)
+  xkb:gb:colemak:eng - English (UK, Colemak)
+  xkb:ml:us-mac:eng - English (Mali, US, Macintosh)
+  xkb:ie::eng - Irish
+  xkb:us:dvorak-intl:eng - English (Dvorak, intl., with dead keys)
+  xkb:gb:extd:eng - English (UK, extended, Windows)
+  xkb:us:colemak_dh_wide_iso:eng - English (Colemak-DH Wide ISO)
+  xkb:us:colemak_dh_ortho:eng - English (Colemak-DH Ortholinear)
+  xkb:us:colemak_dh_iso:eng - English (Colemak-DH ISO)
+  xkb:mm:mnw:eng - Mon
+  xkb:ca:eng:eng - English (Canada)
+  xkb:us:dvorak-mac-iso:eng - English (Dvorak, Macintosh, ISO)
+  xkb:us:dvorak-classic:eng - English (classic Dvorak)
+  xkb:us:dvorak-l:eng - English (Dvorak, one-handed, left)
+  xkb:us:hbs:eng - Serbo-Croatian (US)
+  xkb:nz::eng - English (New Zealand)
+  xkb:mm:shn:eng - Shan
+  xkb:us:workman-intl:eng - English (Workman, intl., with dead keys)
+  xkb:us:norman:eng - English (Norman)
+  xkb:ng::eng - English (Nigeria)
+  xkb:us:dvorak-r:eng - English (Dvorak, one-handed, right)
+  xkb:us::eng - English (US)
+language: Georgian
+  xkb:ge::kat - Georgian
+  xkb:it:geo:kat - Georgian (Italy)
+  xkb:ge:ergonomic:kat - Georgian (ergonomic)
+  xkb:ge:mess:kat - Georgian (MESS)
+  xkb:fr:geo:kat - Georgian (France, AZERTY Tskapo)
+language: Matal
+  xkb:cm:qwerty:mfh - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:mfh - Cameroon (AZERTY, intl.)
+language: Awing
+  xkb:cm:qwerty:azo - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:azo - Cameroon (AZERTY, intl.)
+language: Ewondo
+  xkb:cm:qwerty:ewo - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:ewo - Cameroon (AZERTY, intl.)
+language: Udmurt
+  xkb:ru:udm:udm - Udmurt
+language: Italian
+  xkb:it:winkeys:ita - Italian (Windows)
+  xkb:it:ibm:ita - Italian (IBM 142)
+  xkb:it:scn:ita - Sicilian
+  xkb:it::ita - Italian
+  xkb:it:us:ita - Italian (US)
+  xkb:it:nodeadkeys:ita - Italian (no dead keys)
+  xkb:it:mac:ita - Italian (Macintosh)
+language: Waray (Philippines)
+  xkb:ph:dvorak:war - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:war - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:war - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::war - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:war - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:war - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:war - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:war - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:war - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:war - Filipino (Capewell-Dvorak, Latin)
+language: Miyobe
+  xkb:tg::soy - French (Togo)
+language: Tausug
+  xkb:my:phonetic:tsg - Malay (Jawi, phonetic)
+  xkb:my::tsg - Malay (Jawi, Arabic Keyboard)
+language: Portuguese
+  xkb:br:thinkpad:por - Portuguese (Brazil, IBM/Lenovo ThinkPad)
+  xkb:pt:mac_nodeadkeys:por - Portuguese (Macintosh, no dead keys)
+  xkb:br::por - Portuguese (Brazil)
+  xkb:pt:nativo-us:por - Portuguese (Nativo for US keyboards)
+  xkb:br:nativo:por - Portuguese (Brazil, Nativo)
+  xkb:pt:mac:por - Portuguese (Macintosh)
+  xkb:br:nodeadkeys:por - Portuguese (Brazil, no dead keys)
+  xkb:br:dvorak:por - Portuguese (Brazil, Dvorak)
+  xkb:pt:nativo:por - Portuguese (Nativo)
+  xkb:pt::por - Portuguese
+  xkb:pt:nodeadkeys:por - Portuguese (no dead keys)
+  xkb:br:nativo-us:por - Portuguese (Brazil, Nativo for US keyboards)
+language: Icelandic
+  xkb:is:mac:isl - Icelandic (Macintosh)
+  xkb:is:mac_legacy:isl - Icelandic (Macintosh, legacy)
+  xkb:is::isl - Icelandic
+  xkb:is:dvorak:isl - Icelandic (Dvorak)
+language: Bosnian
+  xkb:us:hbs:bos - Serbo-Croatian (US)
+  xkb:ba:unicode:bos - Bosnian (with Bosnian digraphs)
+  xkb:ba::bos - Bosnian
+  xkb:ba:unicodeus:bos - Bosnian (US, with Bosnian digraphs)
+  xkb:ba:us:bos - Bosnian (US)
+  xkb:ba:alternatequotes:bos - Bosnian (with guillemets)
+language: Mogofin
+  xkb:tg::mfg - French (Togo)
+language: Other
+  xkb:cm:qwerty:btb - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:btb - Cameroon (AZERTY, intl.)
+language: Greek, Modern (1453-)
+  xkb:gr:nodeadkeys:ell - Greek (no dead keys)
+  xkb:gr:simple:ell - Greek (simple)
+  xkb:gr::ell - Greek
+  xkb:gr:polytonic:ell - Greek (polytonic)
+language: Syriac
+  xkb:sy:syc_phonetic:syr - Syriac (phonetic)
+  xkb:sy:syc:syr - Syriac
+  xkb:sy::syr - Arabic (Syria)
+language: Swo
+  xkb:cm:azerty:sox - Cameroon (AZERTY, intl.)
+  xkb:cm:qwerty:sox - Cameroon Multilingual (QWERTY, intl.)
+language: Chhattisgarhi
+  xkb:in::hne - Indian
+language: Pushto
+  xkb:af:ps-olpc:pus - Pashto (Afghanistan, OLPC)
+  xkb:af:ps:pus - Pashto
+language: Hebrew
+  xkb:il:phonetic:heb - Hebrew (phonetic)
+  xkb:il:lyx:heb - Hebrew (lyx)
+  xkb:il:si2:heb - Hebrew (SI-1452-2)
+  xkb:il:biblical:heb - Hebrew (Biblical, Tiro)
+  xkb:il::heb - Hebrew
+language: Yamba
+  xkb:cm:qwerty:yam - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:yam - Cameroon (AZERTY, intl.)
+language: Breton
+  xkb:fr:bre:bre - Breton (France)
+language: Bunun
+  xkb:tw:indigenous:bnn - Taiwanese (indigenous)
+language: Burmese
+  xkb:mm::mya - Burmese
+  xkb:mm:zawgyi:mya - Burmese (Zawgyi)
+language: Slovenian
+  xkb:si:us:slv - Slovenian (US)
+  xkb:si:alternatequotes:slv - Slovenian (with guillemets)
+  xkb:si::slv - Slovenian
+language: Slovak
+  xkb:sk:bksl:slk - Slovak (extra backslash)
+  xkb:sk:qwerty:slk - Slovak (QWERTY)
+  xkb:sk::slk - Slovak
+  xkb:sk:qwerty_bksl:slk - Slovak (QWERTY, extra backslash)
+language: Bulu (Cameroon)
+  xkb:cm:qwerty:bum - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:bum - Cameroon (AZERTY, intl.)
+language: Siraya
+  xkb:tw:indigenous:fos - Taiwanese (indigenous)
+language: Nawdm
+  xkb:tg::nmz - French (Togo)
+language: Occitan (post 1500)
+  xkb:fr:oci:oci - Occitan
+language: Santali
+  xkb:bd:probhat:sat - Bangla (Probhat)
+  xkb:in:ben-kagapa:sat - Bangla (India, KaGaPa, phonetic)
+  xkb:in:ori-wx:sat - Oriya (Wx)
+  xkb:in:ben_baishakhi:sat - Bangla (India, Baishakhi)
+  xkb:in:ben_gitanjali:sat - Bangla (India, Gitanjali)
+  xkb:in:ben_probhat:sat - Bangla (India, Probhat)
+  xkb:in:ben_inscript:sat - Bangla (India, Baishakhi InScript)
+  xkb:in:ori-bolnagri:sat - Oriya (Bolnagri)
+  xkb:in:ben_bornona:sat - Bangla (India, Bornona)
+  xkb:in:sat:sat - Santali (Ol Chiki)
+  xkb:in:ori:sat - Oriya
+  xkb:bd::sat - Bangla
+  xkb:np::sat - Nepali
+  xkb:in:ben:sat - Bangla (India)
+language: Abkhazian
+  xkb:ru:ab:abk - Abkhazian (Russia)
+language: Undetermined
+  xkb:custom::und - A user-defined custom Layout
+language: Fulfulde, Borgu
+  xkb:tg::fue - French (Togo)
+language: Nimadi
+  xkb:in::noe - Indian
+language: Sinhala
+  xkb:lk:us:sin - Sinhala (US)
+  xkb:lk::sin - Sinhala (phonetic)
+language: Magar, Eastern
+  xkb:in::mgp - Indian
+language: Sasak
+  xkb:id:melayu-phonetic:sas - Indonesian (Arab Melayu, phonetic)
+  xkb:id::sas - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:sas - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:sas - Javanese
+  xkb:id:pegon-phonetic:sas - Indonesian (Arab Pegon, phonetic)
+language: Wolof
+  xkb:sn::wol - Wolof
+language: Bangla
+  xkb:in:ben_bornona:ben - Bangla (India, Bornona)
+  xkb:bd::ben - Bangla
+  xkb:in:ben:ben - Bangla (India)
+  xkb:bd:probhat:ben - Bangla (Probhat)
+  xkb:in:ben-kagapa:ben - Bangla (India, KaGaPa, phonetic)
+  xkb:in:ben_baishakhi:ben - Bangla (India, Baishakhi)
+  xkb:in:ben_gitanjali:ben - Bangla (India, Gitanjali)
+  xkb:in:ben_probhat:ben - Bangla (India, Probhat)
+  xkb:in:ben_inscript:ben - Bangla (India, Baishakhi InScript)
+language: Hausa
+  xkb:ng:hausa:hau - Hausa (Nigeria)
+  xkb:gh:hausa:hau - Hausa (Ghana)
+language: Pidgin, Cameroon
+  xkb:cm:qwerty:wes - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:wes - Cameroon (AZERTY, intl.)
+language: Pazeh
+  xkb:tw:indigenous:pzh - Taiwanese (indigenous)
+language: Nomaande
+  xkb:cm:azerty:lem - Cameroon (AZERTY, intl.)
+  xkb:cm:qwerty:lem - Cameroon Multilingual (QWERTY, intl.)
+language: Paiwan
+  xkb:tw:indigenous:pwn - Taiwanese (indigenous)
+language: Ifè
+  xkb:tg::ife - French (Togo)
+language: Bambara
+  xkb:ml::bam - Bambara
+language: Malay, Pattani
+  xkb:my:phonetic:mfa - Malay (Jawi, phonetic)
+  xkb:my::mfa - Malay (Jawi, Arabic Keyboard)
+language: Maltese
+  xkb:mt:us:mlt - Maltese (US)
+  xkb:mt:alt-us:mlt - Maltese (US, with AltGr overrides)
+  xkb:mt::mlt - Maltese
+  xkb:mt:alt-gb:mlt - Maltese (UK, with AltGr overrides)
+language: Tatar
+  xkb:ru:tt:tat - Tatar
+language: Sakizaya
+  xkb:tw:indigenous:szy - Taiwanese (indigenous)
+language: Fulfulde, Adamawa
+  xkb:cm:qwerty:fub - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:fub - Cameroon (AZERTY, intl.)
+language: Malay (macrolanguage)
+  xkb:my:phonetic:msa - Malay (Jawi, phonetic)
+  xkb:my::msa - Malay (Jawi, Arabic Keyboard)
+language: Kulon
+  xkb:tw:indigenous:uon - Taiwanese (indigenous)
+language: Fon
+  xkb:tg::fon - French (Togo)
+language: Ewe
+  xkb:tg::ewe - French (Togo)
+  xkb:gh:ewe:ewe - Ewe
+language: Cebuano
+  xkb:ph:colemak-bay:ceb - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:ceb - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::ceb - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:ceb - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:ceb - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:ceb - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:ceb - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:ceb - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:ceb - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:ceb - Filipino (Dvorak, Latin)
+language: Polish
+  xkb:pl:legacy:pol - Polish (legacy)
+  xkb:pl::pol - Polish
+  xkb:pl:qwertz:pol - Polish (QWERTZ)
+  xkb:pl:dvorak:pol - Polish (Dvorak)
+  xkb:gb:pl:pol - Polish (British keyboard)
+  xkb:pl:dvorak_altquotes:pol - Polish (Dvorak, with Polish quotes on key 1)
+  xkb:pl:dvorak_quotes:pol - Polish (Dvorak, with Polish quotes on quotemark key)
+  xkb:pl:dvp:pol - Polish (programmer Dvorak)
+language: French
+  xkb:fr:nodeadkeys:fra - French (no dead keys)
+  xkb:cm:azerty:fra - Cameroon (AZERTY, intl.)
+  xkb:fr:mac:fra - French (Macintosh)
+  xkb:fr:ergol:fra - French (Ergo‑L)
+  xkb:fr:oss:fra - French (alt.)
+  xkb:ca:fr-legacy:fra - French (Canada, legacy)
+  xkb:ma:french:fra - French (Morocco)
+  xkb:cd::fra - French (Democratic Republic of the Congo)
+  xkb:fr:dvorak:fra - French (Dvorak)
+  xkb:ca::fra - French (Canada)
+  xkb:tg::fra - French (Togo)
+  xkb:cm:french:fra - French (Cameroon)
+  xkb:ml:fr-oss:fra - French (Mali, alt.)
+  xkb:ca:fr-dvorak:fra - French (Canada, Dvorak)
+  xkb:fr:us:fra - French (US)
+  xkb:fr:oss_latin9:fra - French (alt., Latin-9 only)
+  xkb:ch:fr_nodeadkeys:fra - French (Switzerland, no dead keys)
+  xkb:fr:latin9:fra - French (legacy, alt.)
+  xkb:be:oss:fra - Belgian (alt.)
+  xkb:be:nodeadkeys:fra - Belgian (no dead keys)
+  xkb:be:wang:fra - Belgian (Wang 724 AZERTY)
+  xkb:fr:bepo_latin9:fra - French (BEPO, Latin-9 only)
+  xkb:fr:ergol_iso:fra - French (Ergo‑L, ISO variant)
+  xkb:fr:oss_nodeadkeys:fra - French (alt., no dead keys)
+  xkb:fr:bepo_afnor:fra - French (BEPO, AFNOR)
+  xkb:ch:fr:fra - French (Switzerland)
+  xkb:us:altgr-intl:fra - English (intl., with AltGr dead keys)
+  xkb:dz::fra - Berber (Algeria, Latin)
+  xkb:be::fra - Belgian
+  xkb:fr::fra - French
+  xkb:fr:latin9_nodeadkeys:fra - French (legacy, alt., no dead keys)
+  xkb:fr:azerty:fra - French (AZERTY)
+  xkb:be:oss_latin9:fra - Belgian (Latin-9 only, alt.)
+  xkb:fr:afnor:fra - French (AZERTY, AFNOR)
+  xkb:fr:bepo:fra - French (BEPO)
+  xkb:ca:multix:fra - Canadian (CSA)
+  xkb:be:iso-alternate:fra - Belgian (ISO, alt.)
+  xkb:ch:fr_mac:fra - French (Switzerland, Macintosh)
+language: Buginese
+  xkb:id:javanese:bug - Javanese
+  xkb:id:pegon-phonetic:bug - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:bug - Indonesian (Arab Melayu, phonetic)
+  xkb:id::bug - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:bug - Indonesian (Arab Melayu, extended phonetic)
+language: Kom (Cameroon)
+  xkb:cm:qwerty:bkm - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:bkm - Cameroon (AZERTY, intl.)
+language: Marathi
+  xkb:in:marathi:mar - Marathi (enhanced InScript)
+  xkb:in:mar-kagapa:mar - Marathi (KaGaPa, phonetic)
+  xkb:in::mar - Indian
+language: Sami, Northern
+  xkb:no:smi:sme - Northern Saami (Norway)
+  xkb:no:smi_nodeadkeys:sme - Northern Saami (Norway, no dead keys)
+  xkb:fi:smi:sme - Northern Saami (Finland)
+  xkb:se:smi:sme - Northern Saami (Sweden)
+language: Kangri
+  xkb:in::xnr - Indian
+language: Kashubian
+  xkb:pl:csb:csb - Kashubian
+language: Turkish
+  xkb:de:tr:tur - Turkish (Germany)
+  xkb:tr:alt:tur - Turkish (Alt-Q)
+  xkb:tr:intl:tur - Turkish (intl., with dead keys)
+  xkb:tr:e:tur - Turkish (E)
+  xkb:tr:f:tur - Turkish (F)
+  xkb:tr::tur - Turkish
+language: Basa (Cameroon)
+  xkb:cm:qwerty:bas - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:bas - Cameroon (AZERTY, intl.)
+language: Hadothi
+  xkb:in::hoj - Indian
+language: Mbudum
+  xkb:cm:qwerty:xmd - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:xmd - Cameroon (AZERTY, intl.)
+language: Lukpa
+  xkb:tg::dop - French (Togo)
+language: Sindhi
+  xkb:pk:snd:snd - Sindhi
+language: Irish, Old (to 900)
+  xkb:ie:ogam_is434:sga - Ogham (IS434)
+  xkb:ie:ogam:sga - Ogham
+language: Kurukh
+  xkb:in::kru - Indian
+language: Tarifit
+  xkb:ma:rif:rif - Tarifit
+language: Shan
+  xkb:mm:shn:shn - Shan
+  xkb:mm:zgt:shn - Shan (Zawgyi)
+language: Rajbanshi
+  xkb:in::rjs - Indian
+language: Chuvash
+  xkb:ru:cv:chv - Chuvash
+  xkb:ru:cv_latin:chv - Chuvash (Latin)
+language: Javanese
+  xkb:id:melayu-phonetic:jav - Indonesian (Arab Melayu, phonetic)
+  xkb:id::jav - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:jav - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:jav - Javanese
+  xkb:id:pegon-phonetic:jav - Indonesian (Arab Pegon, phonetic)
+language: Faroese
+  xkb:fo:nodeadkeys:fao - Faroese (no dead keys)
+  xkb:fo::fao - Faroese
+language: Manipuri
+  xkb:in:mni:mni - Manipuri (Meitei)
+language: Duala
+  xkb:cm:qwerty:dua - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:dua - Cameroon (AZERTY, intl.)
+language: Betawi
+  xkb:id:pegon-phonetic:bew - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:bew - Indonesian (Arab Melayu, phonetic)
+  xkb:id::bew - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:bew - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:bew - Javanese
+language: Ntcham
+  xkb:tg::bud - French (Togo)
+language: Bantawa
+  xkb:in::bap - Indian
+language: Haryanvi
+  xkb:in::bgc - Indian
+language: Igbo
+  xkb:ng:igbo:ibo - Igbo
+language: Azerbaijani, South
+  xkb:ir:azb:azb - Azerbaijani (Iran)
+language: Bulgarian
+  xkb:bg::bul - Bulgarian
+  xkb:bg:bas_phonetic:bul - Bulgarian (new phonetic)
+  xkb:bg:bekl:bul - Bulgarian (enhanced)
+  xkb:bg:phonetic:bul - Bulgarian (traditional phonetic)
+language: Musi
+  xkb:id::mui - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:mui - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:mui - Javanese
+  xkb:id:pegon-phonetic:mui - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:mui - Indonesian (Arab Melayu, phonetic)
+language: Mongolian
+  xkb:mn::mon - Mongolian
+language: Sanskrit
+  xkb:in:san-kagapa:san - Sanskrit (KaGaPa, phonetic)
+language: Serbo-Croatian
+  xkb:us:hbs:hbs - Serbo-Croatian (US)
+language: Tswana
+  xkb:bw::tsn - Tswana
+language: Wagdi
+  xkb:in::wbr - Indian
+language: Bhojpuri
+  xkb:in::bho - Indian
+language: Czech
+  xkb:cz:winkeys-qwerty:ces - Czech (QWERTY, Windows)
+  xkb:cz:winkeys:ces - Czech (QWERTZ, Windows)
+  xkb:cz:bksl:ces - Czech (extra backslash)
+  xkb:cz::ces - Czech
+  xkb:cz:dvorak-ucw:ces - Czech (US, Dvorak, UCW support)
+  xkb:cz:qwerty_bksl:ces - Czech (QWERTY, extra backslash)
+  xkb:cz:qwerty:ces - Czech (QWERTY)
+  xkb:cz:ucw:ces - Czech (UCW, only accented letters)
+  xkb:cz:qwerty-mac:ces - Czech (QWERTY, Macintosh)
+language: Balinese
+  xkb:id:melayu-phonetic:ban - Indonesian (Arab Melayu, phonetic)
+  xkb:id::ban - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:ban - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:ban - Javanese
+  xkb:id:pegon-phonetic:ban - Indonesian (Arab Pegon, phonetic)
+language: Uzbek
+  xkb:uz:latin:uzb - Uzbek (Latin)
+  xkb:af:uz-olpc:uzb - Uzbek (Afghanistan, OLPC)
+  xkb:af:uz:uzb - Uzbek (Afghanistan)
+  xkb:uz::uzb - Uzbek
+language: Belarusian
+  xkb:by:intl:bel - Belarusian (intl.)
+  xkb:by:phonetic:bel - Belarusian (phonetic)
+  xkb:by::bel - Belarusian
+  xkb:by:legacy:bel - Belarusian (legacy)
+  xkb:by:latin:bel - Belarusian (Latin)
+language: Pinyin
+  xkb:cm:qwerty:pny - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:pny - Cameroon (AZERTY, intl.)
+language: Malayalam
+  xkb:in:mal_enhanced:mal - Malayalam (enhanced InScript, with rupee)
+  xkb:in:mal:mal - Malayalam
+  xkb:in:mal_lalitha:mal - Malayalam (Lalitha)
+  xkb:in:mal_poorna:mal - Malayalam (Poorna, extended InScript)
+language: Tagalog
+  xkb:ph::tgl - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:tgl - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:tgl - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:tgl - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:tgl - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:tgl - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:tgl - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:tgl - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:tgl - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:tgl - Filipino (Capewell-Dvorak, Baybayin)
+language: Macedonian
+  xkb:mk:nodeadkeys:mkd - Macedonian (no dead keys)
+  xkb:mk::mkd - Macedonian
+language: Indonesian
+  xkb:my:phonetic:ind - Malay (Jawi, phonetic)
+  xkb:my::ind - Malay (Jawi, Arabic Keyboard)
+  xkb:id:javanese:ind - Javanese
+  xkb:id:pegon-phonetic:ind - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:ind - Indonesian (Arab Melayu, phonetic)
+  xkb:id::ind - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:ind - Indonesian (Arab Melayu, extended phonetic)
+language: Turkmen
+  xkb:tm:alt:tuk - Turkmen (Alt-Q)
+  xkb:tm::tuk - Turkmen
+language: Yakut
+  xkb:ru:sah:sah - Yakut
+language: Ho
+  xkb:in::hoc - Indian
+language: Shekhawati
+  xkb:in::swv - Indian
+language: Dogri (macrolanguage)
+  xkb:in::doi - Indian
+language: Other
+  xkb:ma:tifinagh-extended:ber - Berber (Morocco, Tifinagh extended)
+  xkb:ma:tifinagh-extended-phonetic:ber - Berber (Morocco, Tifinagh extended phonetic)
+  xkb:ma:tifinagh-alt:ber - Berber (Morocco, Tifinagh alt.)
+  xkb:ma:tifinagh-phonetic:ber - Berber (Morocco, Tifinagh phonetic)
+  xkb:ma:tifinagh:ber - Berber (Morocco, Tifinagh)
+  xkb:ma:tifinagh-alt-phonetic:ber - Berber (Morocco, Tifinagh phonetic, alt.)
+language: Finnish
+  xkb:fi:mac:fin - Finnish (Macintosh)
+  xkb:fi:winkeys:fin - Finnish (Windows)
+  xkb:fi:nodeadkeys:fin - Finnish (classic, no dead keys)
+  xkb:fi::fin - Finnish
+  xkb:fi:classic:fin - Finnish (classic)
+language: Maori
+  xkb:nz:mao:mri - Maori
+language: Amis
+  xkb:tw:indigenous:ami - Taiwanese (indigenous)
+language: Sediq
+  xkb:tw:indigenous:trv - Taiwanese (indigenous)
+language: Denya
+  xkb:cm:qwerty:anv - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:anv - Cameroon (AZERTY, intl.)
+language: Bashkir
+  xkb:ru:bak:bak - Bashkirian
+language: Gujarati
+  xkb:in:guj-kagapa:guj - Gujarati (KaGaPa, phonetic)
+  xkb:in:guj:guj - Gujarati
+language: Thai
+  xkb:th::tha - Thai
+  xkb:th:tis:tha - Thai (TIS-820.2538)
+  xkb:th:mnc:tha - Thai (Manoonchai)
+  xkb:th:pat:tha - Thai (Pattachote)
+language: Panjabi
+  xkb:in:jhelum:pan - Punjabi (Gurmukhi Jhelum)
+  xkb:in:guru:pan - Punjabi (Gurmukhi)
+language: Bhilali
+  xkb:in::bhi - Indian
+language: Tharu, Kathoriya
+  xkb:in::tkt - Indian
+language: Anii
+  xkb:tg::blo - French (Togo)
+language: Awadhi
+  xkb:in::awa - Indian
+language: Dzongkha
+  xkb:bt::dzo - Dzongkha
+language: Tajik
+  xkb:tj::tgk - Tajik
+  xkb:tj:legacy:tgk - Tajik (legacy)
+language: Silesian
+  xkb:pl:szl:szl - Silesian
+language: Hiligaynon
+  xkb:ph:capewell-dvorak-bay:hil - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::hil - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:hil - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:hil - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:hil - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:hil - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:hil - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:hil - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:hil - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:hil - Filipino (Colemak, Baybayin)
+language: Fulah
+  xkb:gh:fula:ful - Fula
+language: Dotyali
+  xkb:in::dty - Indian
+language: Atayal
+  xkb:tw:indigenous:tay - Taiwanese (indigenous)
+language: Arabic, Egyptian
+  xkb:eg::arz - Arabic (Egypt)
+language: Braj
+  xkb:in::bra - Indian
+language: N'Ko
+  xkb:gn::nqo - N'Ko (AZERTY)
+language: Kirghiz
+  xkb:kg::kir - Kyrgyz
+  xkb:kg:phonetic:kir - Kyrgyz (phonetic)
+language: Kavalan
+  xkb:tw:indigenous:ckv - Taiwanese (indigenous)
+language: Thao
+  xkb:tw:indigenous:ssf - Taiwanese (indigenous)
+language: Saisiyat
+  xkb:tw:saisiyat:xsy - Saisiyat (Taiwan)
+language: Telugu
+  xkb:in:tel-kagapa:tel - Telugu (KaGaPa, phonetic)
+  xkb:in:tel:tel - Telugu
+  xkb:in:tel-sarala:tel - Telugu (Sarala)
+language: Arabic, Moroccan
+  xkb:ma::ary - Arabic (Morocco)
+language: Urdu
+  xkb:pk:pak_urdu_phonetic:urd - Urdu (Pak Urdu Phonetic)
+  xkb:in:urd-phonetic3:urd - Urdu (alt. phonetic)
+  xkb:in:urd-winkeys:urd - Urdu (Windows)
+  xkb:pk:urd-crulp:urd - Urdu (Pakistan, CRULP)
+  xkb:in:urd-phonetic:urd - Urdu (phonetic)
+  xkb:pk::urd - Urdu (Pakistan)
+  xkb:pk:urd-nla:urd - Urdu (Pakistan, NLA)
+language: Kwasio
+  xkb:cm:qwerty:nmg - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:nmg - Cameroon (AZERTY, intl.)
+language: Tem
+  xkb:tg::kdh - French (Togo)
+language: Makasar
+  xkb:id:javanese:mak - Javanese
+  xkb:id:pegon-phonetic:mak - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:mak - Indonesian (Arab Melayu, phonetic)
+  xkb:id::mak - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:mak - Indonesian (Arab Melayu, extended phonetic)
+language: Bagheli
+  xkb:in::bfy - Indian
+language: Khandesi
+  xkb:in::khn - Indian
+language: Filipino
+  xkb:ph::fil - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:fil - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:fil - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:fil - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:fil - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:fil - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:fil - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:fil - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:fil - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:fil - Filipino (Capewell-Dvorak, Baybayin)
+language: Ngangam
+  xkb:tg::gng - French (Togo)
+language: Jumli
+  xkb:in::jml - Indian
+language: Divehi
+  xkb:mv::div - Dhivehi
+language: Magar, Western
+  xkb:in::mrd - Indian
+language: Angika
+  xkb:in::anp - Indian
+language: Komi
+  xkb:ru:kom:kom - Komi
+language: Maithili
+  xkb:in::mai - Indian
+language: Kanakanabu
+  xkb:tw:indigenous:xnb - Taiwanese (indigenous)
+language: Norwegian
+  xkb:no:winkeys:nor - Norwegian (Windows)
+  xkb:no:colemak_dh_wide:nor - Norwegian (Colemak-DH Wide)
+  xkb:no::nor - Norwegian
+  xkb:no:mac_nodeadkeys:nor - Norwegian (Macintosh, no dead keys)
+  xkb:no:dvorak:nor - Norwegian (Dvorak)
+  xkb:no:mac:nor - Norwegian (Macintosh)
+  xkb:no:nodeadkeys:nor - Norwegian (no dead keys)
+  xkb:no:colemak_dh:nor - Norwegian (Colemak-DH)
+  xkb:no:colemak:nor - Norwegian (Colemak)
+language: Bhili
+  xkb:in::bhb - Indian
+language: Koonzime
+  xkb:cm:qwerty:ozm - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:ozm - Cameroon (AZERTY, intl.)
+language: Persian
+  xkb:ir:pes_keypad:fas - Persian (with Persian keypad)
+  xkb:ir:winkeys:fas - Persian (Windows)
+  xkb:ir::fas - Persian
+language: Kurdish
+  xkb:iq:ku_f:kur - Kurdish (Iraq, F)
+  xkb:ir:ku_f:kur - Kurdish (Iran, F)
+  xkb:iq:ku:kur - Kurdish (Iraq, Latin Q)
+  xkb:sy:ku:kur - Kurdish (Syria, Latin Q)
+  xkb:tr:ku_f:kur - Kurdish (Turkey, F)
+  xkb:tr:ku_alt:kur - Kurdish (Turkey, Latin Alt-Q)
+  xkb:ir:ku:kur - Kurdish (Iran, Latin Q)
+  xkb:tr:ku:kur - Kurdish (Turkey, Latin Q)
+  xkb:ir:ku_alt:kur - Kurdish (Iran, Latin Alt-Q)
+  xkb:ir:ku_ara:kur - Kurdish (Iran, Arabic-Latin)
+  xkb:iq:ku_alt:kur - Kurdish (Iraq, Latin Alt-Q)
+  xkb:sy:ku_alt:kur - Kurdish (Syria, Latin Alt-Q)
+  xkb:iq:ku_ara:kur - Kurdish (Iraq, Arabic-Latin)
+  xkb:sy:ku_f:kur - Kurdish (Syria, F)
+language: Tamil
+  xkb:lk:tam_TAB:tam - Tamil (Sri Lanka, TamilNet '99, TAB encoding)
+  xkb:in:tam_tamilnumbers:tam - Tamil (InScript, with Tamil numerals)
+  xkb:lk:tam_unicode:tam - Tamil (Sri Lanka, TamilNet '99)
+  xkb:in:tamilnet_TSCII:tam - Tamil (TamilNet '99, TSCII encoding)
+  xkb:in:tamilnet_tamilnumbers:tam - Tamil (TamilNet '99 with Tamil numerals)
+  xkb:in:tam:tam - Tamil (InScript, with Arabic numerals)
+  xkb:in:tamilnet_TAB:tam - Tamil (TamilNet '99, TAB encoding)
+  xkb:in:tamilnet:tam - Tamil (TamilNet '99)
+language: Mewati
+  xkb:in::wtm - Indian
+language: Russian
+  xkb:cz:rus:rus - Russian (Czechia, phonetic)
+  xkb:kz:ruskaz:rus - Russian (Kazakhstan, with Kazakh)
+  xkb:ru:phonetic_azerty:rus - Russian (phonetic, AZERTY)
+  xkb:ru:ruchey_ru:rus - Russian (engineering, RU)
+  xkb:pl:ru_phonetic_dvorak:rus - Russian (Poland, phonetic Dvorak)
+  xkb:ru:typewriter-legacy:rus - Russian (typewriter, legacy)
+  xkb:ru:typewriter:rus - Russian (typewriter)
+  xkb:us:rus:rus - Russian (US, phonetic)
+  xkb:ge:ru:rus - Russian (Georgia)
+  xkb:ru:phonetic:rus - Russian (phonetic)
+  xkb:ru:mac:rus - Russian (Macintosh)
+  xkb:ru:phonetic_winkeys:rus - Russian (phonetic, Windows)
+  xkb:ru:phonetic_dvorak:rus - Russian (phonetic, Dvorak)
+  xkb:kz:kazrus:rus - Kazakh (with Russian)
+  xkb:ru::rus - Russian
+  xkb:by:ru:rus - Russian (Belarus)
+  xkb:de:ru:rus - Russian (Germany, phonetic)
+  xkb:br:rus:rus - Russian (Brazil, phonetic)
+  xkb:ru:srp:rus - Serbian (Russia)
+  xkb:ru:phonetic_YAZHERTY:rus - Russian (phonetic, YAZHERTY)
+  xkb:ru:legacy:rus - Russian (legacy)
+  xkb:se:rus:rus - Russian (Sweden, phonetic)
+  xkb:ru:ruchey_en:rus - Russian (engineering, EN)
+  xkb:ru:dos:rus - Russian (DOS)
+language: Puyuma
+  xkb:tw:indigenous:pyu - Taiwanese (indigenous)
+language: Norwegian Nynorsk
+  xkb:no:nodeadkeys:nno - Norwegian (no dead keys)
+  xkb:no:colemak_dh:nno - Norwegian (Colemak-DH)
+  xkb:no:colemak:nno - Norwegian (Colemak)
+  xkb:no:winkeys:nno - Norwegian (Windows)
+  xkb:no:colemak_dh_wide:nno - Norwegian (Colemak-DH Wide)
+  xkb:no::nno - Norwegian
+  xkb:no:mac_nodeadkeys:nno - Norwegian (Macintosh, no dead keys)
+  xkb:no:dvorak:nno - Norwegian (Dvorak)
+  xkb:no:mac:nno - Norwegian (Macintosh)
+language: Gorontalo
+  xkb:id:melayu-phonetic:gor - Indonesian (Arab Melayu, phonetic)
+  xkb:id::gor - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:gor - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:gor - Javanese
+  xkb:id:pegon-phonetic:gor - Indonesian (Arab Pegon, phonetic)
+language: Aja (Benin)
+  xkb:tg::ajg - French (Togo)
+language: Gurung
+  xkb:in::gvr - Indian
+language: Azerbaijani
+  xkb:az:cyrillic:aze - Azerbaijani (Cyrillic)
+  xkb:az::aze - Azerbaijani
+language: Swedish Sign Language
+  xkb:se:swl:swl - Swedish Sign Language
+language: Konkani (macrolanguage)
+  xkb:in::kok - Indian
+language: Magahi
+  xkb:in::mag - Indian
+language: Bateri
+  xkb:in::btv - Indian
+language: Lamnso'
+  xkb:cm:qwerty:lns - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:lns - Cameroon (AZERTY, intl.)
+language: Dari
+  xkb:af:fa-olpc:prs - Dari (Afghanistan, OLPC)
+  xkb:af::prs - Dari
+language: Kalmyk
+  xkb:ru:xal:xal - Kalmyk
+language: German, Swiss
+  xkb:ch:legacy:gsw - German (Switzerland, legacy)
+  xkb:ch::gsw - German (Switzerland)
+  xkb:ch:de_nodeadkeys:gsw - German (Switzerland, no dead keys)
+  xkb:ch:de_mac:gsw - German (Switzerland, Macintosh)
+language: Armenian
+  xkb:am:eastern-alt:hye - Armenian (alt. eastern)
+  xkb:am:eastern:hye - Armenian (eastern)
+  xkb:am:phonetic:hye - Armenian (phonetic)
+  xkb:am::hye - Armenian
+  xkb:am:western:hye - Armenian (western)
+  xkb:am:phonetic-alt:hye - Armenian (alt. phonetic)
+language: Dutch
+  xkb:nl::nld - Dutch
+  xkb:nl:us:nld - Dutch (US)
+  xkb:be:oss:nld - Belgian (alt.)
+  xkb:be:nodeadkeys:nld - Belgian (no dead keys)
+  xkb:be:wang:nld - Belgian (Wang 724 AZERTY)
+  xkb:nl:mac:nld - Dutch (Macintosh)
+  xkb:be::nld - Belgian
+  xkb:be:oss_latin9:nld - Belgian (Latin-9 only, alt.)
+  xkb:nl:std:nld - Dutch (standard)
+  xkb:be:iso-alternate:nld - Belgian (ISO, alt.)
+language: Tharu, Rana
+  xkb:in::thr - Indian
+language: Achinese
+  xkb:my:phonetic:ace - Malay (Jawi, phonetic)
+  xkb:my::ace - Malay (Jawi, Arabic Keyboard)
+  xkb:id:javanese:ace - Javanese
+  xkb:id:pegon-phonetic:ace - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:ace - Indonesian (Arab Melayu, phonetic)
+  xkb:id::ace - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:ace - Indonesian (Arab Melayu, extended phonetic)
+language: Sherpa
+  xkb:in::xsr - Indian
+language: Tharu, Kochila
+  xkb:in::thq - Indian
+language: Ukrainian
+  xkb:ua::ukr - Ukrainian
+  xkb:ua:macOS:ukr - Ukrainian (macOS)
+  xkb:ua:typewriter:ukr - Ukrainian (typewriter)
+  xkb:ua:winkeys:ukr - Ukrainian (Windows)
+  xkb:ua:legacy:ukr - Ukrainian (legacy)
+  xkb:ua:homophonic:ukr - Ukrainian (homophonic)
+  xkb:ua:winkeysenhanced:ukr - Ukrainian (Windows Enhanced)
+  xkb:ua:phonetic:ukr - Ukrainian (phonetic)
+language: Kenyang
+  xkb:cm:qwerty:ken - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:ken - Cameroon (AZERTY, intl.)
+language: Madurese
+  xkb:id:javanese:mad - Javanese
+  xkb:id:pegon-phonetic:mad - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:mad - Indonesian (Arab Melayu, phonetic)
+  xkb:id::mad - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:mad - Indonesian (Arab Melayu, extended phonetic)
+language: Batak Simalungun
+  xkb:id:javanese:bts - Javanese
+  xkb:id:pegon-phonetic:bts - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:bts - Indonesian (Arab Melayu, phonetic)
+  xkb:id::bts - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:bts - Indonesian (Arab Melayu, extended phonetic)
+language: Marwari
+  xkb:in::mwr - Indian
+language: Sorbian, Lower
+  xkb:de:dsb:dsb - Lower Sorbian
+  xkb:de:dsb_qwertz:dsb - Lower Sorbian (QWERTZ)
+language: Bikol
+  xkb:ph:dvorak:bik - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:bik - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:bik - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::bik - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:bik - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:bik - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:bik - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:bik - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:bik - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:bik - Filipino (Capewell-Dvorak, Latin)
+language: Yami
+  xkb:tw:indigenous:tao - Taiwanese (indigenous)
+language: Tamang, Western
+  xkb:in::tdg - Indian
+language: Konkani, Goan
+  xkb:in::gom - Indian
+language: Thulung
+  xkb:in::tdh - Indian
+language: Korean
+  xkb:kr:kr104:kor - Korean (101/104-key compatible)
+  xkb:kr::kor - Korean
+language: Romanian
+  xkb:de:ro:ron - Romanian (Germany)
+  xkb:ro:std:ron - Romanian (standard)
+  xkb:de:ro_nodeadkeys:ron - Romanian (Germany, no dead keys)
+  xkb:ro:winkeys:ron - Romanian (Windows)
+  xkb:ro::ron - Romanian
+  xkb:md::ron - Moldavian
+language: Yoruba
+  xkb:ng:yoruba:yor - Yoruba
+language: Rusyn
+  xkb:rs:rue:rue - Pannonian Rusyn
+language: Catalan
+  xkb:es:cat:cat - Catalan (Spain, with middle-dot L)
+language: Hungarian
+  xkb:hu:102_qwertz_dot_dead:hun - Hungarian (QWERTZ, 102-key, dot, dead keys)
+  xkb:hu:standard:hun - Hungarian (standard)
+  xkb:hu:102_qwerty_dot_dead:hun - Hungarian (QWERTY, 102-key, dot, dead keys)
+  xkb:hu:101_qwertz_dot_dead:hun - Hungarian (QWERTZ, 101-key, dot, dead keys)
+  xkb:hu:101_qwerty_dot_dead:hun - Hungarian (QWERTY, 101-key, dot, dead keys)
+  xkb:hu:qwerty:hun - Hungarian (QWERTY)
+  xkb:hu:102_qwerty_dot_nodead:hun - Hungarian (QWERTY, 102-key, dot, no dead keys)
+  xkb:hu:101_qwerty_comma_nodead:hun - Hungarian (QWERTY, 101-key, comma, no dead keys)
+  xkb:hu:102_qwertz_dot_nodead:hun - Hungarian (QWERTZ, 102-key, dot, no dead keys)
+  xkb:hu:102_qwerty_comma_dead:hun - Hungarian (QWERTY, 102-key, comma, dead keys)
+  xkb:hu:101_qwerty_dot_nodead:hun - Hungarian (QWERTY, 101-key, dot, no dead keys)
+  xkb:hu:101_qwertz_dot_nodead:hun - Hungarian (QWERTZ, 101-key, dot, no dead keys)
+  xkb:hu:101_qwerty_comma_dead:hun - Hungarian (QWERTY, 101-key, comma, dead keys)
+  xkb:hu:101_qwertz_comma_dead:hun - Hungarian (QWERTZ, 101-key, comma, dead keys)
+  xkb:hu:102_qwerty_comma_nodead:hun - Hungarian (QWERTY, 102-key, comma, no dead keys)
+  xkb:hu:102_qwertz_comma_nodead:hun - Hungarian (QWERTZ, 102-key, comma, no dead keys)
+  xkb:hu::hun - Hungarian
+  xkb:hu:102_qwertz_comma_dead:hun - Hungarian (QWERTZ, 102-key, comma, dead keys)
+  xkb:hu:101_qwertz_comma_nodead:hun - Hungarian (QWERTZ, 101-key, comma, no dead keys)
+  xkb:hu:nodeadkeys:hun - Hungarian (no dead keys)
+language: Kumaoni
+  xkb:in::kfy - Indian
+language: Cherokee
+  xkb:us:chr:chr - Cherokee
+language: Japanese
+  xkb:jp::jpn - Japanese
+  xkb:jp:mac:jpn - Japanese (Macintosh)
+  xkb:jp:OADG109A:jpn - Japanese (OADG 109A)
+  xkb:jp:dvorak:jpn - Japanese (Dvorak)
+  xkb:jp:kana:jpn - Japanese (Kana)
+language: Tsou
+  xkb:tw:indigenous:tsu - Taiwanese (indigenous)
+language: Iloko
+  xkb:ph:colemak:ilo - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:ilo - Filipino (Capewell-QWERF 2006, Latin)
+  xkb:ph:dvorak-bay:ilo - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:ilo - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:ilo - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:ilo - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:ilo - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::ilo - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:ilo - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:ilo - Filipino (QWERTY, Baybayin)
+language: Kannada
+  xkb:in:kan-kagapa:kan - Kannada (KaGaPa, phonetic)
+  xkb:in:kan:kan - Kannada
+language: Khmer
+  xkb:kh::khm - Khmer (Cambodia)
+language: Minangkabau
+  xkb:id:melayu-phonetic:min - Indonesian (Arab Melayu, phonetic)
+  xkb:id::min - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:min - Indonesian (Arab Melayu, extended phonetic)
+  xkb:my:phonetic:min - Malay (Jawi, phonetic)
+  xkb:my::min - Malay (Jawi, Arabic Keyboard)
+  xkb:id:javanese:min - Javanese
+  xkb:id:pegon-phonetic:min - Indonesian (Arab Pegon, phonetic)
+language: Assamese
+  xkb:in:asm-kagapa:asm - Assamese (KaGaPa, phonetic)
+language: Saaroa
+  xkb:tw:indigenous:sxr - Taiwanese (indigenous)
+language: Tharu, Dangaura
+  xkb:in::thl - Indian
+language: Kabiyè
+  xkb:tg::kbp - French (Togo)
+language: Ossetian
+  xkb:ge:os:oss - Ossetian (Georgia)
+  xkb:ru:os_winkeys:oss - Ossetian (Windows)
+  xkb:ru:os_legacy:oss - Ossetian (legacy)
+language: Arabic
+  xkb:iq::ara - Arabic (Iraq)
+  xkb:ara:mac-phonetic:ara - Arabic (Macintosh, phonetic)
+  xkb:ara::ara - Arabic
+  xkb:ara:mac:ara - Arabic (Macintosh)
+  xkb:ara:olpc:ara - Arabic (OLPC)
+  xkb:pk:ara:ara - Arabic (Pakistan)
+  xkb:ara:buckwalter:ara - Arabic (Buckwalter)
+  xkb:dz:ar:ara - Arabic (Algeria)
+  xkb:ara:azerty_digits:ara - Arabic (AZERTY, Eastern Arabic numerals)
+  xkb:ara:digits:ara - Arabic (Eastern Arabic numerals)
+  xkb:ara:azerty:ara - Arabic (AZERTY)
+  xkb:eg::ara - Arabic (Egypt)
+language: Nepali (macrolanguage)
+  xkb:np::nep - Nepali
+  xkb:in::nep - Indian
+language: Croatian
+  xkb:hr:alternatequotes:hrv - Croatian (with guillemets)
+  xkb:hr:unicode:hrv - Croatian (with Croatian digraphs)
+  xkb:hr:unicodeus:hrv - Croatian (US, with Croatian digraphs)
+  xkb:hr::hrv - Croatian
+  xkb:hr:us:hrv - Croatian (US)
+  xkb:us:hbs:hrv - Serbo-Croatian (US)
+language: Kabyle
+  xkb:dz::kab - Berber (Algeria, Latin)
+  xkb:dz:qwerty-us-deadkeys:kab - Kabyle (QWERTY, US, with dead keys)
+  xkb:dz:azerty-deadkeys:kab - Kabyle (AZERTY, with dead keys)
+  xkb:dz:qwerty-gb-deadkeys:kab - Kabyle (QWERTY, UK, with dead keys)
+  xkb:dz:ber:kab - Berber (Algeria, Tifinagh)
+language: Oriya (macrolanguage)
+  xkb:in:ori-bolnagri:ori - Oriya (Bolnagri)
+  xkb:in:ori:ori - Oriya
+  xkb:in:ori-wx:ori - Oriya (Wx)
+language: Kazakh
+  xkb:kz:latin:kaz - Kazakh (Latin)
+  xkb:kz:kazrus:kaz - Kazakh (with Russian)
+  xkb:kz::kaz - Kazakh
+  xkb:kz:ruskaz:kaz - Russian (Kazakhstan, with Kazakh)
+  xkb:kz:ext:kaz - Kazakh (extended)
+language: Gaelic, Scottish
+  xkb:gb:gla:gla - Scottish Gaelic
+language: Ikposo
+  xkb:tg::kpo - French (Togo)
+language: Tamang, Eastern
+  xkb:in::taj - Indian
+language: Tatar, Crimean
+  xkb:ua:crh_f:crh - Crimean Tatar (Turkish F)
+  xkb:ua:crh:crh - Crimean Tatar (Turkish Q)
+  xkb:ua:crh_alt:crh - Crimean Tatar (Turkish Alt-Q)
+language: Batak Mandailing
+  xkb:id:javanese:btm - Javanese
+  xkb:id:pegon-phonetic:btm - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:btm - Indonesian (Arab Melayu, phonetic)
+  xkb:id::btm - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:btm - Indonesian (Arab Melayu, extended phonetic)
+language: Gagauz
+  xkb:md:gag:gag - Gagauz (Moldova)
+language: Mewari
+  xkb:in::mtr - Indian
+language: Sicilian
+  xkb:it:scn:scn - Sicilian
+language: Swahili (macrolanguage)
+  xkb:ke::swa - Swahili (Kenya)
+  xkb:tz::swa - Swahili (Tanzania)
+language: Mari (Russia)
+  xkb:ru:chm:chm - Mari
+language: Kikuyu
+  xkb:ke:kik:kik - Kikuyu
+language: Malay, Jambi
+  xkb:id:melayu-phonetic:jax - Indonesian (Arab Melayu, phonetic)
+  xkb:id::jax - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:jax - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:jax - Javanese
+  xkb:id:pegon-phonetic:jax - Indonesian (Arab Pegon, phonetic)
+language: Latvian
+  xkb:lv::lav - Latvian
+  xkb:lv:fkey:lav - Latvian (F)
+  xkb:lv:modern:lav - Latvian (Modern Latin)
+  xkb:lv:modern-cyr:lav - Latvian (Modern Cyrillic)
+  xkb:lv:tilde:lav - Latvian (tilde)
+  xkb:lv:ergonomic:lav - Latvian (ergonomic, ŪGJRMV)
+  xkb:lv:adapted:lav - Latvian (adapted)
+  xkb:lv:apostrophe:lav - Latvian (apostrophe)
+language: Friulian
+  xkb:it:fur:fur - Friulian (Italy)
+language: Norwegian Bokmål
+  xkb:no:colemak_dh:nob - Norwegian (Colemak-DH)
+  xkb:no:colemak:nob - Norwegian (Colemak)
+  xkb:no:winkeys:nob - Norwegian (Windows)
+  xkb:no:colemak_dh_wide:nob - Norwegian (Colemak-DH Wide)
+  xkb:no::nob - Norwegian
+  xkb:no:mac_nodeadkeys:nob - Norwegian (Macintosh, no dead keys)
+  xkb:no:dvorak:nob - Norwegian (Dvorak)
+  xkb:no:mac:nob - Norwegian (Macintosh)
+  xkb:no:nodeadkeys:nob - Norwegian (no dead keys)
+language: Swedish
+  xkb:se:dvorak:swe - Swedish (Dvorak)
+  xkb:se:colemak:swe - Swedish (Colemak)
+  xkb:se:nodeadkeys:swe - Swedish (no dead keys)
+  xkb:se:us_dvorak:swe - Swedish (Dvorak, intl.)
+  xkb:se::swe - Swedish
+  xkb:se:mac:swe - Swedish (Macintosh)
+  xkb:se:us:swe - Swedish (US)
+  xkb:se:svdvorak:swe - Swedish (Svdvorak)
+language: Bhasa, Nepal
+  xkb:in::new - Indian
+language: Batak Toba
+  xkb:id:melayu-phonetic:bbc - Indonesian (Arab Melayu, phonetic)
+  xkb:id::bbc - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:bbc - Indonesian (Arab Melayu, extended phonetic)
+  xkb:id:javanese:bbc - Javanese
+  xkb:id:pegon-phonetic:bbc - Indonesian (Arab Pegon, phonetic)
+language: Samogitian
+  xkb:lt:sgs:sgs - Samogitian
+language: Irish
+  xkb:ie:CloGaelach:gle - CloGaelach
+language: Rajasthani
+  xkb:in::raj - Indian
+language: Kachhi
+  xkb:in::kfr - Indian
+language: Sundanese
+  xkb:id:javanese:sun - Javanese
+  xkb:id:pegon-phonetic:sun - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:sun - Indonesian (Arab Melayu, phonetic)
+  xkb:id::sun - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:sun - Indonesian (Arab Melayu, extended phonetic)
+language: Pampanga
+  xkb:ph:dvorak-bay:pam - Filipino (Dvorak, Baybayin)
+  xkb:ph:capewell-dvorak:pam - Filipino (Capewell-Dvorak, Latin)
+  xkb:ph:dvorak:pam - Filipino (Dvorak, Latin)
+  xkb:ph:colemak-bay:pam - Filipino (Colemak, Baybayin)
+  xkb:ph:capewell-dvorak-bay:pam - Filipino (Capewell-Dvorak, Baybayin)
+  xkb:ph::pam - Filipino
+  xkb:ph:capewell-qwerf2k6-bay:pam - Filipino (Capewell-QWERF 2006, Baybayin)
+  xkb:ph:qwerty-bay:pam - Filipino (QWERTY, Baybayin)
+  xkb:ph:colemak:pam - Filipino (Colemak, Latin)
+  xkb:ph:capewell-qwerf2k6:pam - Filipino (Capewell-QWERF 2006, Latin)
+language: Estonian
+  xkb:ee:nodeadkeys:est - Estonian (no dead keys)
+  xkb:ee::est - Estonian
+  xkb:ee:dvorak:est - Estonian (Dvorak)
+  xkb:ee:us:est - Estonian (US)
+language: Lama (Togo)
+  xkb:tg::las - French (Togo)
+language: Amharic
+  xkb:et::amh - Amharic
+language: Lithuanian
+  xkb:lt:ibm:lit - Lithuanian (IBM)
+  xkb:lt::lit - Lithuanian
+  xkb:lt:std:lit - Lithuanian (standard)
+  xkb:lt:us:lit - Lithuanian (US)
+  xkb:lt:ratise:lit - Lithuanian (Ratise)
+  xkb:lt:lekpa:lit - Lithuanian (LEKPa)
+  xkb:lt:lekp:lit - Lithuanian (LEKP)
+language: Sadri
+  xkb:in::sck - Indian
+language: Avatime
+  xkb:gh:avn:avn - Avatime
+language: Nyanga
+  xkb:cm:qwerty:nyj - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:nyj - Cameroon (AZERTY, intl.)
+language: Gen
+  xkb:tg::gej - French (Togo)
+language: Spanish
+  xkb:es::spa - Spanish
+  xkb:latam:dvorak:spa - Spanish (Latin American, Dvorak)
+  xkb:latam:deadtilde:spa - Spanish (Latin American, dead tilde)
+  xkb:es:nodeadkeys:spa - Spanish (no dead keys)
+  xkb:latam:nodeadkeys:spa - Spanish (Latin American, no dead keys)
+  xkb:es:winkeys:spa - Spanish (Windows)
+  xkb:es:deadtilde:spa - Spanish (dead tilde)
+  xkb:latam:colemak:spa - Spanish (Latin American, Colemak)
+  xkb:es:dvorak:spa - Spanish (Dvorak)
+  xkb:latam::spa - Spanish (Latin American)
+language: Asturian
+  xkb:es:ast:ast - Asturian (Spain, with bottom-dot H and L)
+language: Tamazight, Central Atlas
+  xkb:dz::tzm - Berber (Algeria, Latin)
+language: Sirmauri
+  xkb:in::srx - Indian
+language: Banjar
+  xkb:id:javanese:bjn - Javanese
+  xkb:id:pegon-phonetic:bjn - Indonesian (Arab Pegon, phonetic)
+  xkb:id:melayu-phonetic:bjn - Indonesian (Arab Melayu, phonetic)
+  xkb:id::bjn - Indonesian (Latin)
+  xkb:id:melayu-phoneticx:bjn - Indonesian (Arab Melayu, extended phonetic)
+  xkb:my:phonetic:bjn - Malay (Jawi, phonetic)
+  xkb:my::bjn - Malay (Jawi, Arabic Keyboard)
+language: Yambeta
+  xkb:cm:qwerty:yat - Cameroon Multilingual (QWERTY, intl.)
+  xkb:cm:azerty:yat - Cameroon (AZERTY, intl.)
+language: German
+  xkb:ch:de_mac:deu - German (Switzerland, Macintosh)
+  xkb:de:deadacute:deu - German (dead acute)
+  xkb:de:dvorak:deu - German (Dvorak)
+  xkb:de:deadgraveacute:deu - German (dead grave acute)
+  xkb:de:e1:deu - German (E1)
+  xkb:de:nodeadkeys:deu - German (no dead keys)
+  xkb:de:deadtilde:deu - German (dead tilde)
+  xkb:de:e2:deu - German (E2)
+  xkb:de::deu - German
+  xkb:at::deu - German (Austria)
+  xkb:be:oss:deu - Belgian (alt.)
+  xkb:be:nodeadkeys:deu - Belgian (no dead keys)
+  xkb:de:us:deu - German (US)
+  xkb:de:mac:deu - German (Macintosh)
+  xkb:be:wang:deu - Belgian (Wang 724 AZERTY)
+  xkb:ch:legacy:deu - German (Switzerland, legacy)
+  xkb:ch::deu - German (Switzerland)
+  xkb:de:qwerty:deu - German (QWERTY)
+  xkb:de:neo:deu - German (Neo 2)
+  xkb:de:T3:deu - German (T3)
+  xkb:us:altgr-intl:deu - English (intl., with AltGr dead keys)
+  xkb:de:mac_nodeadkeys:deu - German (Macintosh, no dead keys)
+  xkb:be::deu - Belgian
+  xkb:at:nodeadkeys:deu - German (Austria, no dead keys)
+  xkb:be:oss_latin9:deu - Belgian (Latin-9 only, alt.)
+  xkb:be:iso-alternate:deu - Belgian (ISO, alt.)
+  xkb:at:mac:deu - German (Austria, Macintosh)
+  xkb:ch:de_nodeadkeys:deu - German (Switzerland, no dead keys)
