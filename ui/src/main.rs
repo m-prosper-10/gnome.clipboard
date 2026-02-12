@@ -16,42 +16,13 @@ pub struct Emoji {
 }
 
 #[proxy(
-    interface = "org.freedesktop.IBus.Engine",
-    default_service = "org.freedesktop.IBus.EmojiInput",
-    default_path = "/org/freedesktop/IBus/Engine/1"
+    interface = "org.example.EmojiInput.Picker",
+    default_service = "org.example.EmojiInput.Picker",
+    default_path = "/org/example/EmojiInput/Picker"
 )]
-trait EmojiEngine {
+trait EmojiPicker {
     #[zbus(signal)]
     fn update_results(&self, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
-}
-
-
-fn get_ibus_address() -> Option<String> {
-    if let Ok(addr) = env::var("IBUS_ADDRESS") {
-        if !addr.is_empty() {
-            return Some(addr);
-        }
-    }
-    
-    let home = env::var("HOME").ok()?;
-    let machine_id = std::fs::read_to_string("/etc/machine-id").ok()?.trim().to_string();
-    let path = format!("{}/.config/ibus/bus/", home);
-    let entries = std::fs::read_dir(path).ok()?;
-    
-    for entry in entries {
-        if let Ok(entry) = entry {
-            let filename = entry.file_name().to_string_lossy().to_string();
-            if filename.starts_with(&machine_id) {
-                let content = std::fs::read_to_string(entry.path()).ok()?;
-                for line in content.lines() {
-                    if let Some(addr) = line.strip_prefix("IBUS_ADDRESS=") {
-                        return Some(addr.trim().to_string());
-                    }
-                }
-            }
-        }
-    }
-    None
 }
 
 #[tokio::main]
@@ -89,43 +60,26 @@ async fn main() -> glib::ExitCode {
         let app_clone = app.clone();
 
         // Run DBus listener on the main thread (local task)
+        // Use session bus - engine forwards UpdateResults there (IBus bus not visible to GTK app)
         glib::MainContext::default().spawn_local(async move {
             let app = app_clone;
-            let addr = match get_ibus_address() {
-                Some(a) => a,
-                None => {
-                    error!("Could not find IBus address. Is IBus running?");
-                    app.quit();
-                    return;
-                }
-            };
-            
-            let address: zbus::Address = match addr.parse() {
-                Ok(a) => a,
-                Err(e) => {
-                    error!("Invalid IBus address '{}': {}", addr, e);
-                    app.quit();
-                    return;
-                }
-            };
-
-            let conn = match zbus::connection::Builder::address(address) {
+            let conn = match zbus::connection::Builder::session() {
                 Ok(b) => match b.build().await {
                     Ok(c) => c,
                     Err(e) => {
-                        error!("Failed to build connection: {}", e);
+                        error!("Failed to connect to session bus: {}", e);
                         app.quit();
                         return;
                     }
                 },
                 Err(e) => {
-                    error!("Failed to create connection builder: {}", e);
+                    error!("Failed to create session connection: {}", e);
                     app.quit();
                     return;
                 }
             };
 
-            let proxy = match EmojiEngineProxy::new(&conn).await {
+            let proxy = match EmojiPickerProxy::new(&conn).await {
                 Ok(p) => p,
                 Err(e) => {
                     error!("Failed to create EmojiEngine proxy: {}", e);
@@ -143,7 +97,7 @@ async fn main() -> glib::ExitCode {
                 }
             };
 
-            info!("Connected to IBus engine. Listening for signals...");
+            info!("Connected to session bus. Listening for emoji picker signals...");
 
             while let Some(signal) = stream.next().await {
                 let args = match signal.args() {
@@ -183,7 +137,7 @@ async fn main() -> glib::ExitCode {
                             row.grab_focus();
                         }
 
-                        window.show();
+                        window.present();
                     }
                     glib::ControlFlow::Break
                 });
