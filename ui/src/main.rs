@@ -3,7 +3,9 @@ use gtk::prelude::*;
 use zbus::proxy;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
+use std::cell::RefCell;
 use std::env;
+use std::rc::Rc;
 use log::{info, error, debug, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
@@ -23,6 +25,8 @@ pub struct Emoji {
 trait EmojiPicker {
     #[zbus(signal)]
     fn update_results(&self, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
+
+    fn commit_emoji(&self, text: &str) -> zbus::Result<()>;
 }
 
 #[tokio::main]
@@ -45,6 +49,7 @@ async fn main() -> glib::ExitCode {
             .decorated(false)
             .can_focus(false)
             .build();
+        window.set_accept_focus(false);
 
         let list_box = gtk::ListBox::builder()
             .margin_top(10)
@@ -52,12 +57,29 @@ async fn main() -> glib::ExitCode {
             .margin_start(10)
             .margin_end(10)
             .build();
+        list_box.set_can_focus(false);
 
         window.set_child(Some(&list_box));
 
         let window_clone = window.clone();
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
+
+        // Store current results for row-activated (click) lookup
+        let results_store: Rc<RefCell<Vec<Emoji>>> = Rc::new(RefCell::new(Vec::new()));
+        let results_store_for_activate = results_store.clone();
+
+        // Channel for click-to-commit (main thread -> async loop)
+        let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
+        let commit_tx = Rc::new(commit_tx);
+
+        list_box.connect_row_activated(move |_, row| {
+            let index = row.index();
+            let results = results_store_for_activate.borrow();
+            if let Some(emoji) = results.get(index as usize) {
+                let _ = commit_tx.try_send(emoji.char.clone());
+            }
+        });
 
         // Run DBus listener on the main thread (local task)
         // Use session bus - engine forwards UpdateResults there (IBus bus not visible to GTK app)
@@ -99,48 +121,61 @@ async fn main() -> glib::ExitCode {
 
             info!("Connected to session bus. Listening for emoji picker signals...");
 
-            while let Some(signal) = stream.next().await {
-                let args = match signal.args() {
-                    Ok(a) => a,
-                    Err(e) => {
-                        warn!("Failed to get signal args: {}", e);
-                        continue;
+            loop {
+                tokio::select! {
+                    signal = stream.next() => {
+                        match signal {
+                            Some(signal) => {
+                                let args = match signal.args() {
+                                    Ok(a) => a,
+                                    Err(e) => {
+                                        warn!("Failed to get signal args: {}", e);
+                                        continue;
+                                    }
+                                };
+                                let results = args.results;
+                                let selected_index = args.selected_index as i32;
+                                
+                                debug!("Received {} results, selected_index: {}", results.len(), selected_index);
+                                let list_box = list_box_clone.clone();
+                                let window = window_clone.clone();
+                                let results_store = results_store.clone();
+                                
+                                glib::idle_add_local(move || {
+                                    *results_store.borrow_mut() = results.clone();
+                                    if results.is_empty() {
+                                        window.hide();
+                                    } else {
+                                        while let Some(child) = list_box.first_child() {
+                                            list_box.remove(&child);
+                                        }
+                                        for emoji in &results {
+                                            let label = gtk::Label::new(Some(&format!("{} :{}", emoji.char, emoji.name)));
+                                            label.set_halign(gtk::Align::Start);
+                                            list_box.append(&label);
+                                        }
+                                        if let Some(row) = list_box.row_at_index(selected_index) {
+                                            list_box.select_row(Some(&row));
+                                        }
+                                        window.present();
+                                    }
+                                    glib::ControlFlow::Break
+                                });
+                            }
+                            None => break,
+                        }
                     }
-                };
-                let results = args.results;
-                let selected_index = args.selected_index as i32;
-                
-                debug!("Received {} results, selected_index: {}", results.len(), selected_index);
-                let list_box = list_box_clone.clone();
-                let window = window_clone.clone();
-                
-                glib::idle_add_local(move || {
-                    if results.is_empty() {
-                        window.hide();
-                    } else {
-                        // Clear list
-                        while let Some(child) = list_box.first_child() {
-                            list_box.remove(&child);
+                    text = commit_rx.recv() => {
+                        match text {
+                            Some(t) => {
+                                if let Err(e) = proxy.commit_emoji(&t).await {
+                                    warn!("commit_emoji failed: {}", e);
+                                }
+                            }
+                            None => break,
                         }
-                        
-                        // Add results
-                        for emoji in &results {
-                            let label = gtk::Label::new(Some(&format!("{} :{}", emoji.char, emoji.name)));
-                            label.set_halign(gtk::Align::Start);
-                            list_box.append(&label);
-                        }
-                        
-                        // Select the row
-                        if let Some(row) = list_box.row_at_index(selected_index) {
-                            list_box.select_row(Some(&row));
-                            // Row might need focus to show selection style in some themes
-                            row.grab_focus();
-                        }
-
-                        window.present();
                     }
-                    glib::ControlFlow::Break
-                });
+                }
             }
             info!("Engine stream ended, shutting down UI...");
             app.quit();

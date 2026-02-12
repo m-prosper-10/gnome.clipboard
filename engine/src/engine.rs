@@ -374,6 +374,24 @@ impl EmojiEngine {
         Ok(())
     }
 
+    /// Commit emoji from UI (e.g. mouse click). Called via D-Bus from session bus.
+    async fn commit_emoji(
+        &mut self,
+        #[zbus(signal_emitter)] se: SignalEmitter<'_>,
+        text: String,
+    ) -> fdo::Result<()> {
+        if !text.is_empty() {
+            self.record_usage(text.clone());
+            let _ = self.emit_commit_text(&se, text).await;
+        }
+        self.internal_reset();
+        // Notify UI to hide popup
+        if let Some(ref tx) = self.picker_tx {
+            let _ = tx.try_send((Vec::new(), 0));
+        }
+        Ok(())
+    }
+
     #[zbus(signal, name = "CommitText")]
     async fn commit_text_signal(se: &SignalEmitter<'_>, text: Value<'_>) -> zbus::Result<()>;
 
