@@ -81,7 +81,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Invalid IBus address '{}': {}", addr_str, e))?;
     
     let connection: Connection = connection::Builder::address(address)?
-        .name("org.freedesktop.IBus.EmojiInput")?
+        .name("org.example.EmojiInput")?
         .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
         .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::with_database(database))?
         .build()

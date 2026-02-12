@@ -4,7 +4,7 @@ A modern, fast, and native emoji input manager for GNOME, integrating seamlessly
 
 ## Features
 
-- **Trigger Character**: Swiftly insert emojis using a customizable trigger character (default `:`).
+- **Trigger Character**: Swiftly insert emojis using a customizable trigger character (default `:`) or the **Super + ;** global shortcut.
 - **Searchable**: Real-time emoji search as you type.
 - **Recently Used**: Remembers your favorite emojis and puts them at the top of the list.
 - **Emoji Variants**: Support for skin tones and other variants, easily accessible in the picker.
@@ -50,7 +50,7 @@ ibus restart
 ## Usage
 
 1. Switch to the **Emoji Input** source.
-2. Type `:` followed by the name of an emoji (e.g., `:smile`).
+2. Press **Super + ;** or type `:` followed by the name of an emoji (e.g., `:smile`).
 3. Use **Up/Down Arrows** to select the emoji.
 4. Press **Enter** to insert it.
 5. Press **Esc** or **Backspace** to cancel.

@@ -11,6 +11,7 @@ pub struct Emoji {
     pub char: String,
     pub name: String,
     pub keywords: Vec<String>,
+    #[serde(default)]
     pub variants: Vec<String>,
 }
 

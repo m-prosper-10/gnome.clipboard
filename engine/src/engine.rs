@@ -9,6 +9,7 @@ pub struct Emoji {
     pub char: String,
     pub name: String,
     pub keywords: Vec<String>,
+    #[serde(default)]
     pub variants: Vec<String>,
 }
 
@@ -192,6 +193,17 @@ impl EmojiEngine {
         }
 
         let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
+
+        const SUPER_MASK: u32 = 1 << 26;
+        const RELEASE_MASK: u32 = 1 << 30;
+
+        // Super + ; (Semicolon is 0x3b)
+        if (_state & SUPER_MASK) != 0 && (_state & RELEASE_MASK) == 0 && keyval == 0x3b {
+            if self.buffer.is_empty() {
+                self.buffer.push(trigger);
+            }
+            return (true, None);
+        }
 
         // Check if it's a printable character (rough check for ASCII/Basic Latin)
         if (0x20..=0x7E).contains(&keyval) {
