@@ -1,4 +1,4 @@
-use zbus::{interface, connection, fdo, Connection};
+use zbus::{interface, connection, fdo, proxy, Connection};
 use zbus::object_server::SignalEmitter;
 use zvariant::ObjectPath;
 use std::env;
@@ -10,6 +10,28 @@ mod engine;
 use engine::{EmojiEngine, Emoji};
 
 struct EmojiFactory;
+
+/// Session bus service for UI - forwards CommitEmoji to engine via channel
+struct PickerService {
+    commit_tx: tokio::sync::mpsc::Sender<String>,
+}
+
+#[interface(name = "org.example.EmojiInput.Picker")]
+impl PickerService {
+    async fn commit_emoji(&self, text: String) -> fdo::Result<()> {
+        let _ = self.commit_tx.send(text).await;
+        Ok(())
+    }
+}
+
+#[proxy(
+    interface = "org.freedesktop.IBus.Engine",
+    default_service = "org.example.EmojiInput",
+    default_path = "/org/freedesktop/IBus/Engine/1"
+)]
+trait EngineCommit {
+    fn commit_emoji(&self, text: &str) -> zbus::Result<()>;
+}
 
 #[interface(name = "org.freedesktop.IBus.Factory")]
 impl EmojiFactory {
@@ -86,11 +108,17 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<(Vec<Emoji>, u32)>(32);
     let picker_tx = Arc::new(picker_tx);
 
+    // Channel for UI click-to-commit (session bus -> engine)
+    let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
+    let picker_service = PickerService { commit_tx };
+
     let session_conn = zbus::connection::Builder::session()?
         .name("org.example.EmojiInput.Picker")?
+        .serve_at("/org/example/EmojiInput/Picker", picker_service)?
         .build()
         .await?;
-    let session_emitter = SignalEmitter::new(&session_conn, "/org/example/EmojiInput/Picker");
+    let session_emitter = SignalEmitter::new(&session_conn, "/org/example/EmojiInput/Picker")
+        .expect("Failed to create signal emitter");
 
     let picker_task = tokio::spawn(async move {
         while let Some((results, selected_index)) = picker_rx.recv().await {
@@ -116,6 +144,44 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         
     info!("Engine process started. Unique name: {}", 
         connection.unique_name().map(|n| n.as_str()).unwrap_or("none"));
+
+    // Bridge: forward UI commit requests to engine (engine must be built first)
+    let addr_str_clone = addr_str.clone();
+    let bridge_task = tokio::spawn(async move {
+        let addr: zbus::Address = match addr_str_clone.parse() {
+            Ok(a) => a,
+            Err(e) => {
+                error!("Bridge: invalid IBus address: {}", e);
+                return;
+            }
+        };
+        let builder = match connection::Builder::address(addr) {
+            Ok(b) => b,
+            Err(e) => {
+                error!("Bridge: invalid IBus address: {}", e);
+                return;
+            }
+        };
+        let ibus_conn = match builder.build().await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Bridge: failed to connect to IBus: {}", e);
+                return;
+            }
+        };
+        let proxy = match EngineCommitProxy::new(&ibus_conn).await {
+            Ok(p) => p,
+            Err(e) => {
+                error!("Bridge: failed to create engine proxy: {}", e);
+                return;
+            }
+        };
+        while let Some(text) = commit_rx.recv().await {
+            if let Err(e) = proxy.commit_emoji(&text).await {
+                warn!("Bridge: commit_emoji failed: {}", e);
+            }
+        }
+    });
     
     // Launch UI process
     let current_exe = env::current_exe().ok();
@@ -133,7 +199,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
             if p.exists() { Some(p) } else { None }
         });
 
-    let mut ui_child = if let Some(path) = ui_path {
+    let ui_child = if let Some(path) = ui_path {
         info!("Launching UI from: {:?}", path);
         match std::process::Command::new(&path).spawn() {
             Ok(child) => Some(child),
@@ -150,6 +216,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     tokio::signal::ctrl_c().await?;
     info!("Shutting down engine...");
     picker_task.abort();
+    bridge_task.abort();
     if let Some(mut child) = ui_child {
         let _ = child.kill();
     }

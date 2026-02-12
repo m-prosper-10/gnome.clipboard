@@ -3,7 +3,7 @@ use zvariant::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use log::{info, error, debug, warn};
+use log::{error, debug, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
@@ -94,6 +94,7 @@ impl EmojiEngine {
         engine
     }
 
+    #[allow(dead_code)]
     pub fn with_database(database: EmojiDatabase) -> Self {
         Self::with_database_and_picker(database, None)
     }
@@ -371,6 +372,24 @@ impl EmojiEngine {
 
     async fn reset(&mut self) -> fdo::Result<()> {
         self.internal_reset();
+        Ok(())
+    }
+
+    /// Commit emoji from UI (e.g. mouse click). Called via D-Bus from session bus.
+    async fn commit_emoji(
+        &mut self,
+        #[zbus(signal_emitter)] se: SignalEmitter<'_>,
+        text: String,
+    ) -> fdo::Result<()> {
+        if !text.is_empty() {
+            self.record_usage(text.clone());
+            let _ = self.emit_commit_text(&se, text).await;
+        }
+        self.internal_reset();
+        // Notify UI to hide popup
+        if let Some(ref tx) = self.picker_tx {
+            let _ = tx.try_send((Vec::new(), 0));
+        }
         Ok(())
     }
 
