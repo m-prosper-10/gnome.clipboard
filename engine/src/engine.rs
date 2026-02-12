@@ -1,6 +1,7 @@
 use zbus::{interface, fdo, object_server::SignalEmitter};
 use zvariant::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use log::{info, error, debug, warn};
 
@@ -73,6 +74,8 @@ pub struct EmojiEngine {
     pub recents: Vec<String>,
     // Settings (trigger character, etc.)
     pub settings: Settings,
+    /// Channel to forward UpdateResults to session bus for UI
+    picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
 }
 
 impl EmojiEngine {
@@ -84,13 +87,21 @@ impl EmojiEngine {
             selected_index: 0,
             recents: Vec::new(),
             settings: Settings::default(),
+            picker_tx: None,
         };
         engine.load_recents();
         engine.load_settings();
         engine
     }
-    
+
     pub fn with_database(database: EmojiDatabase) -> Self {
+        Self::with_database_and_picker(database, None)
+    }
+
+    pub fn with_database_and_picker(
+        database: EmojiDatabase,
+        picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
+    ) -> Self {
         let mut engine = EmojiEngine {
             buffer: String::new(),
             enabled: false,
@@ -98,6 +109,7 @@ impl EmojiEngine {
             selected_index: 0,
             recents: Vec::new(),
             settings: Settings::default(),
+            picker_tx,
         };
         engine.load_recents();
         engine.load_settings();
@@ -320,16 +332,24 @@ impl EmojiEngine {
 
         let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
 
-        // Emit search results if in composition
-        if visible && self.buffer.starts_with(trigger) {
+        // Emit search results if in composition (or empty to hide popup)
+        let (emojis, selected) = if visible && self.buffer.starts_with(trigger) {
             let query = self.buffer.trim_start_matches(trigger);
             let emojis = self.database.search(query, &self.recents);
-            // Reset selection if results count changed (simple heuristic)
             let count = emojis.len();
             if self.selected_index >= count && count > 0 {
                 self.selected_index = 0;
             }
-            let _ = self.emit_update_results(&se, emojis, self.selected_index as u32).await;
+            (emojis, self.selected_index as u32)
+        } else {
+            (Vec::new(), 0)
+        };
+        if visible && self.buffer.starts_with(trigger) {
+            let _ = self.emit_update_results(&se, emojis.clone(), selected).await;
+        }
+        // Forward to session bus for UI popup (IBus bus may not be visible to UI)
+        if let Some(ref tx) = self.picker_tx {
+            let _ = tx.try_send((emojis, selected));
         }
 
         if let Some(text) = commit {

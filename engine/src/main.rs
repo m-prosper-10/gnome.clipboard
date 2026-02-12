@@ -1,11 +1,13 @@
 use zbus::{interface, connection, fdo, Connection};
+use zbus::object_server::SignalEmitter;
 use zvariant::ObjectPath;
 use std::env;
 use std::process::ExitCode;
+use std::sync::Arc;
 use log::{info, error, debug, warn};
 
 mod engine;
-use engine::EmojiEngine;
+use engine::{EmojiEngine, Emoji};
 
 struct EmojiFactory;
 
@@ -79,11 +81,36 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     debug!("Connecting to IBus at {}", addr_str);
     let address: zbus::Address = addr_str.parse()
         .map_err(|e| format!("Invalid IBus address '{}': {}", addr_str, e))?;
-    
+
+    // Session bus channel for UI popup (IBus daemon bus is not visible to GTK app)
+    let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<(Vec<Emoji>, u32)>(32);
+    let picker_tx = Arc::new(picker_tx);
+
+    let session_conn = zbus::connection::Builder::session()?
+        .name("org.example.EmojiInput.Picker")?
+        .build()
+        .await?;
+    let session_emitter = SignalEmitter::new(&session_conn, "/org/example/EmojiInput/Picker");
+
+    let picker_task = tokio::spawn(async move {
+        while let Some((results, selected_index)) = picker_rx.recv().await {
+            let body = (results, selected_index);
+            if let Err(e) = session_emitter
+                .emit("org.example.EmojiInput.Picker", "UpdateResults", &body)
+                .await
+            {
+                warn!("Failed to emit UpdateResults on session bus: {}", e);
+            }
+        }
+    });
+
     let connection: Connection = connection::Builder::address(address)?
         .name("org.example.EmojiInput")?
         .serve_at("/org/freedesktop/IBus/Factory", EmojiFactory)?
-        .serve_at("/org/freedesktop/IBus/Engine/1", EmojiEngine::with_database(database))?
+        .serve_at(
+            "/org/freedesktop/IBus/Engine/1",
+            EmojiEngine::with_database_and_picker(database, Some(picker_tx)),
+        )?
         .build()
         .await?;
         
@@ -122,6 +149,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     
     tokio::signal::ctrl_c().await?;
     info!("Shutting down engine...");
+    picker_task.abort();
     if let Some(mut child) = ui_child {
         let _ = child.kill();
     }
