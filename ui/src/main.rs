@@ -26,7 +26,7 @@ trait EmojiPicker {
     #[zbus(signal)]
     fn update_results(&self, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
 
-    fn commit_emoji(&self, text: &str) -> zbus::Result<()>;
+    fn commit_emoji(&self, text: &str, token: &str) -> zbus::Result<()>;
 }
 
 #[tokio::main]
@@ -35,6 +35,11 @@ async fn main() -> glib::ExitCode {
         env::set_var("RUST_LOG", "info");
     }
     env_logger::init();
+
+    let picker_token = env::var("EMOJI_INPUT_PICKER_TOKEN").unwrap_or_default();
+    if picker_token.is_empty() {
+        warn!("EMOJI_INPUT_PICKER_TOKEN is missing; commit requests will be rejected");
+    }
 
     let application = gtk::Application::builder()
         .application_id("org.example.EmojiInputUI")
@@ -62,6 +67,7 @@ async fn main() -> glib::ExitCode {
         let window_clone = window.clone();
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
+        let picker_token = picker_token.clone();
 
         // Store current results for row-activated (click) lookup
         let results_store: Rc<RefCell<Vec<Emoji>>> = Rc::new(RefCell::new(Vec::new()));
@@ -166,7 +172,7 @@ async fn main() -> glib::ExitCode {
                     text = commit_rx.recv() => {
                         match text {
                             Some(t) => {
-                                if let Err(e) = proxy.commit_emoji(&t).await {
+                                if let Err(e) = proxy.commit_emoji(&t, &picker_token).await {
                                     warn!("commit_emoji failed: {}", e);
                                 }
                             }

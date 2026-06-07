@@ -14,11 +14,17 @@ struct EmojiFactory;
 /// Session bus service for UI - forwards CommitEmoji to engine via channel
 struct PickerService {
     commit_tx: tokio::sync::mpsc::Sender<String>,
+    picker_token: String,
 }
 
 #[interface(name = "org.example.EmojiInput.Picker")]
 impl PickerService {
-    async fn commit_emoji(&self, text: String) -> fdo::Result<()> {
+    async fn commit_emoji(&self, text: String, token: String) -> fdo::Result<()> {
+        if token != self.picker_token {
+            warn!("Rejecting commit_emoji with invalid instance token");
+            return Ok(());
+        }
+
         let _ = self.commit_tx.send(text).await;
         Ok(())
     }
@@ -110,7 +116,20 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
 
     // Channel for UI click-to-commit (session bus -> engine)
     let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
-    let picker_service = PickerService { commit_tx };
+    let picker_token = format!(
+        "{:x}-{:x}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or_default(),
+        std::process::id()
+    );
+    let picker_token_for_bridge = picker_token.clone();
+    let picker_token_for_ui = picker_token.clone();
+    let picker_service = PickerService {
+        commit_tx,
+        picker_token: picker_token.clone(),
+    };
 
     let session_conn = zbus::connection::Builder::session()?
         .name("org.example.EmojiInput.Picker")?
@@ -177,7 +196,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
         while let Some(text) = commit_rx.recv().await {
-            if let Err(e) = proxy.commit_emoji(&text).await {
+            if let Err(e) = proxy.commit_emoji(&text, &picker_token_for_bridge).await {
                 warn!("Bridge: commit_emoji failed: {}", e);
             }
         }
@@ -201,7 +220,10 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
 
     let ui_child = if let Some(path) = ui_path {
         info!("Launching UI from: {:?}", path);
-        match std::process::Command::new(&path).spawn() {
+        match std::process::Command::new(&path)
+            .env("EMOJI_INPUT_PICKER_TOKEN", &picker_token_for_ui)
+            .spawn()
+        {
             Ok(child) => Some(child),
             Err(e) => {
                 error!("Failed to launch UI process at {:?}: {}", path, e);
