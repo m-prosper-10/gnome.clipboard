@@ -165,6 +165,8 @@
 
 **Goal**: Separation of concerns - dedicated settings UI.
 
+**Current code note**: The prefs app already exists, but it still persists settings to local JSON files in `~/.config/gnome-emoji-input/` and `~/.cache/gnome-emoji-input/`. The GSettings schema file is present for packaging, but the app is not yet wired to it.
+
 - [ ] Implement `ui/` GTK preferences app
   - [ ] Create standalone GTK application
   - [ ] Design preferences window layout
@@ -196,6 +198,8 @@
 ## PHASE 7: Packaging + System Integration
 
 **Goal**: Feels native to GNOME.
+
+**Current code note**: The packaged component file for the IBus engine is installed, and the main desktop/schema placeholder state has been cleaned up. The remaining packaging work is around finishing the desktop integration story and moving prefs to GSettings if that is still the intended direction.
 
 - [ ] Desktop integration
   - [ ] Create `.desktop` file

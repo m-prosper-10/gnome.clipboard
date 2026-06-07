@@ -6,11 +6,12 @@
 - **File**: `engine/src/main.rs`
   - Standalone mode: Displays version and usage info
   - IBus mode: Runs with `--ibus` flag, starts GLib main loop
+  - Session-bus UI bridge: launches the popup and forwards commit requests with a per-launch token
   - Signal handling: Responds to SIGINT and SIGTERM
   
 - **File**: `engine/src/engine.rs`
   - `EmojiEngine` struct with composition buffer
-  - Key event handler stub (ready for PHASE 3)
+  - Key event handler with trigger, navigation, and commit handling
   - Enable/disable/reset methods
   - Unit tests
 
@@ -24,6 +25,7 @@
 - Cargo.toml updated with GLib dependencies
 - Meson build compiles successfully
 - IBus component installation enabled by default
+- Emoji data is installed from `data/emojis.json`
 
 ### 4. Testing Infrastructure
 - **File**: `scripts/test-phase2.sh`
@@ -35,6 +37,7 @@
   - Registers engine with IBus for testing
   - Creates component file with correct paths
   - Restarts IBus and verifies registration
+- Popup commit bridge is protected by a per-launch token in the engine/UI handshake
 
 ## Pending ⏳
 
@@ -65,24 +68,22 @@ The engine is ready but needs manual verification:
 
 ### Not Yet Implemented
 
-- **Hardcoded emoji trigger**: The `:emoji:` → 🙂 test
-  - Reason: Need to verify basic IBus integration first
-  - Next step: Implement in `process_key_event()` after manual testing confirms engine loads
+- **GSettings-backed preferences**: The prefs app still stores settings in local JSON files
+- **Full packaging polish**: Desktop integration and schema installation are still partial
 
 ## Known Limitations
 
-1. **No actual key processing**: Engine runs but doesn't intercept keys yet
-2. **No emoji commit**: `commit_text()` not wired up to IBus
-3. **No preedit display**: Composition buffer exists but not shown to user
+1. **No full GSettings migration**: Preferences still read/write local JSON files
+2. **Session-bus bridge is instance-scoped, not authenticated**: The token prevents accidental cross-instance commits, not hostile same-user access
+3. **Packaging assets are still evolving**: The main desktop file is not present yet
 
 ## Next Steps
 
 ### If Manual Testing Succeeds ✅
-1. Implement actual IBus protocol handling
-2. Add key event processing for `:emoji:` trigger
-3. Wire up `commit_text()` to IBus
+1. Migrate prefs storage from local JSON to GSettings
+2. Add the main desktop entry and finish packaging polish
+3. Expand search and selection behavior
 4. Test emoji insertion in real applications
-5. Mark PHASE 2 complete
 
 ### If Manual Testing Fails ❌
 1. Check IBus logs: `journalctl --user -u ibus`
@@ -106,16 +107,18 @@ The Rust `ibus` crate (v0.2.0) is minimal and unmaintained. Instead:
 ```
 User Input → IBus Daemon → emoji-input-engine (GLib main loop)
                                     ↓
-                            [PHASE 3: Key processing]
+                       [EmojiEngine key handling + search]
                                     ↓
-                            [PHASE 3: Emoji commit]
+                        [IBus commit_text / preedit updates]
+                                    ↓
+                 [Session-bus popup updates + tokenized commit bridge]
 ```
 
 ## Files Modified in PHASE 2
 
 - `engine/Cargo.toml` - Added glib, gio, libc dependencies
-- `engine/src/main.rs` - Implemented main loop and IBus mode
-- `engine/src/engine.rs` - Created EmojiEngine struct
+- `engine/src/main.rs` - Implemented main loop, popup launch, and tokenized UI bridge
+- `engine/src/engine.rs` - Created EmojiEngine struct and search/selection logic
 - `data/ibus-component.xml` - Defined engine registration
 - `scripts/test-phase2.sh` - Testing script
 - `scripts/register-ibus.sh` - Registration helper
