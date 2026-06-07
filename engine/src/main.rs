@@ -65,7 +65,7 @@ async fn main() -> ExitCode {
         }
     } else {
         println!("emoji-input-engine v{}", env!("CARGO_PKG_VERSION"));
-        println!("PHASE 8: Hardening");
+        println!("PHASE 2: Minimal IBus Engine");
         println!();
         println!("To use as IBus engine:");
         println!("  1. Copy ibus-component.xml to ~/.local/share/ibus/component/");
