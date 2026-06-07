@@ -72,23 +72,25 @@
 
 **Goal**: Real input method behavior (still headless).
 
-- [ ] Implement composition buffer
-  - [ ] Create composition state management
-  - [ ] Capture typed characters
-  - [ ] Display preedit text
-  - [ ] Implement cancel logic (Esc)
-  - [ ] Implement confirm logic (Enter)
-- [ ] Emoji database system
-  - [ ] Create `data/emojis.json` structure
-  - [ ] Implement JSON loader
-  - [ ] Build in-memory index
-  - [ ] Add keyword-based filtering
-  - [ ] Implement search algorithm
-- [ ] Search integration
-  - [ ] Connect composition buffer to search
-  - [ ] Filter emoji list based on input
-  - [ ] Commit first match on Enter
-  - [ ] Add debug logging for filtering
+**Current code note**: The composition buffer, search/filtering, recents, and commit path already exist in `engine/src/engine.rs`. The remaining phase 3 work is mostly about keeping that logic cleanly separated, validating it in a live IBus session, and tightening edge cases as they show up.
+
+- [x] Implement composition buffer
+  - [x] Create composition state management
+  - [x] Capture typed characters
+  - [x] Display preedit text
+  - [x] Implement cancel logic (Esc)
+  - [x] Implement confirm logic (Enter)
+- [x] Emoji database system
+  - [x] Create `data/emojis.json` structure
+  - [x] Implement JSON loader
+  - [x] Build in-memory index
+  - [x] Add keyword-based filtering
+  - [x] Implement search algorithm
+- [x] Search integration
+  - [x] Connect composition buffer to search
+  - [x] Filter emoji list based on input
+  - [x] Commit first match on Enter
+  - [x] Add debug logging for filtering
 
 **Deliverables**:
 

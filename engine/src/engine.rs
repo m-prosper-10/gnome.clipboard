@@ -5,6 +5,9 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use log::{error, debug, warn};
 
+pub(crate) mod emoji_db;
+pub(crate) mod search;
+
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
     pub char: String,
