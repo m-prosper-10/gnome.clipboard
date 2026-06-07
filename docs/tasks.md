@@ -48,7 +48,7 @@
   - [x] Implement engine activation handler (stub)
   - [x] Implement key event handler (stub)
   - [x] Implement `commit_text()` function (stub)
-  - [ ] Add hardcoded test trigger (e.g., `:emoji:` → 🙂)
+  - [x] Add hardcoded test trigger (e.g., `:emoji:` → 🙂)
 - [x] Create `ibus-component.xml`
   - [x] Define engine metadata
   - [x] Register engine with IBus
@@ -64,7 +64,7 @@
 - ⏳ Selecting it allows typing
 - ⏳ Pressing hardcoded key inserts single emoji
 
-**Status**: Engine compiles and runs. Component XML ready. Needs manual IBus testing.
+**Status**: Engine implementation is complete. Component XML ready. Needs manual IBus testing.
 
 ---
 
@@ -336,10 +336,10 @@
 
 **Active Phase**: PHASE 2 - Minimal IBus Engine (Headless)
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-06-07
 
 **Notes**: 
 - PHASE 1 completed successfully
 - Build system functional with Rust + Meson integration
-- Ready to implement IBus engine integration
+- Phase 2 implementation is complete; manual IBus validation remains
 - Note: `ibus` crate version 0.2.0 available on crates.io for PHASE 2

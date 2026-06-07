@@ -68,6 +68,7 @@ The engine is ready but needs manual verification:
 
 ### Not Yet Implemented
 
+- **Manual IBus verification**: The code path is implemented, but the engine still needs to be exercised in a live GNOME/IBus session
 - **GSettings-backed preferences**: The prefs app still stores settings in local JSON files
 - **Full packaging polish**: Desktop integration and schema installation are still partial
 
@@ -152,9 +153,10 @@ ibus-setup
 
 PHASE 2 is complete when:
 - ✅ Engine compiles without errors
+- ✅ Engine contains the `:emoji:` hardcoded trigger path
 - ⏳ Engine appears in `ibus list-engine`
 - ⏳ Engine appears in `ibus-setup` GUI
 - ⏳ Engine can be selected and activated
-- ⏳ Typing `:emoji:` inserts 🙂 (hardcoded test)
+- ⏳ Typing `:emoji:` inserts 🙂 in a live IBus session
 
-**Current Status**: 1/5 criteria met. Awaiting manual IBus testing.
+**Current Status**: Implementation complete. Awaiting manual IBus testing.

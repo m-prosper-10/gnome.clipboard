@@ -261,6 +261,12 @@ impl EmojiEngine {
                 }
             }
             0xff0d => { // Enter
+                if self.buffer == ":emoji:" {
+                    self.record_usage("🙂".to_string());
+                    self.internal_reset();
+                    return (true, Some("🙂".to_string()));
+                }
+
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let results = self.database.search(query, &self.recents);
@@ -476,6 +482,27 @@ mod tests {
         assert_eq!(engine.buffer, ":s");
         
         // Press Enter
+        let (handled, commit) = engine.internal_process_key_event(0xff0d, 0, 0);
+        assert!(handled);
+        assert_eq!(commit, Some("🙂".to_string()));
+        assert_eq!(engine.buffer, "");
+    }
+
+    #[test]
+    fn test_hardcoded_trigger() {
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![],
+        };
+        let mut engine = EmojiEngine::with_database(db);
+        engine.internal_enable();
+
+        for keyval in [0x3a, 0x65, 0x6d, 0x6f, 0x6a, 0x69, 0x3a] {
+            let (handled, commit) = engine.internal_process_key_event(keyval, 0, 0);
+            assert!(handled);
+            assert_eq!(commit, None);
+        }
+
         let (handled, commit) = engine.internal_process_key_event(0xff0d, 0, 0);
         assert!(handled);
         assert_eq!(commit, Some("🙂".to_string()));
