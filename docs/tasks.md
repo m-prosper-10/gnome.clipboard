@@ -95,14 +95,18 @@
 **Deliverables**:
 
 - ✅ Typing `:sm` narrows emoji list internally
-- ✅ No UI yet, but logs show correct filtering
+- ✅ Basic popup bridge exists, but the phase remains focused on engine-side behavior
 - ✅ Commit first match on Enter works
 
 ---
 
 ## PHASE 4: Popup GTK UI (Engine-Controlled)
 
-**Goal**: Visual picker - first "feels real" moment.
+**Goal**: Polish the popup GTK UI and harden engine-UI interaction.
+
+**Current code note**: The popup already exists as a basic session-bus-driven ListBox window. Phase 4 is now about positioning, explicit keyboard handling, closure behavior, and polishing the interaction loop rather than building the popup from scratch.
+
+See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase4-plan.md)
 
 - [ ] Create GTK popup window
   - [ ] Initialize GTK application
