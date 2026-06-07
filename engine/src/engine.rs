@@ -35,13 +35,16 @@ impl Default for Settings {
 
 impl EmojiDatabase {
     pub fn search(&self, query: &str, recents: &[String]) -> Vec<Emoji> {
+        let query = query.trim().to_lowercase();
         if query.is_empty() {
             return Vec::new();
         }
         
         let mut results = Vec::new();
         for e in &self.emojis {
-            if e.name.starts_with(query) || e.keywords.iter().any(|k| k.starts_with(query)) {
+            let name = e.name.to_lowercase();
+            let keywords_match = e.keywords.iter().any(|k| k.to_lowercase().starts_with(&query));
+            if name.starts_with(&query) || keywords_match {
                 results.push(e.clone());
                 for v in &e.variants {
                     let mut ve = e.clone();
@@ -214,6 +217,7 @@ impl EmojiEngine {
         if (_state & SUPER_MASK) != 0 && (_state & RELEASE_MASK) == 0 && keyval == 0x3b {
             if self.buffer.is_empty() {
                 self.buffer.push(trigger);
+                self.selected_index = 0;
             }
             return (true, None);
         }
@@ -224,11 +228,13 @@ impl EmojiEngine {
             
             if c == trigger && self.buffer.is_empty() {
                 self.buffer.push(c);
+                self.selected_index = 0;
                 return (true, None);
             }
             
             if !self.buffer.is_empty() {
                 self.buffer.push(c);
+                self.selected_index = 0;
                 return (true, None);
             }
             
@@ -246,6 +252,8 @@ impl EmojiEngine {
                     self.buffer.pop();
                     if self.buffer.is_empty() {
                         self.internal_reset();
+                    } else {
+                        self.selected_index = 0;
                     }
                     (true, None)
                 } else {
@@ -298,6 +306,7 @@ impl EmojiEngine {
     
     pub fn internal_reset(&mut self) {
         self.buffer.clear();
+        self.selected_index = 0;
     }
     
     pub fn internal_enable(&mut self) {
@@ -317,7 +326,7 @@ impl EmojiEngine {
         &mut self,
         #[zbus(signal_emitter)] se: SignalEmitter<'_>,
         keyval: u32,
-        _keycode: u32,
+        keycode: u32,
         state: u32,
     ) -> fdo::Result<bool> {
         // state & (1 << 30) is key release in IBus
@@ -325,7 +334,7 @@ impl EmojiEngine {
             return Ok(false);
         }
 
-        let (handled, commit) = self.internal_process_key_event(keyval, 0, 0);
+        let (handled, commit) = self.internal_process_key_event(keyval, keycode, state);
         
         // Update preedit text always if we are in composition
         let visible = !self.buffer.is_empty();
@@ -489,6 +498,10 @@ mod tests {
         // Search by keyword
         assert_eq!(db.search("hap", &[]).len(), 1);
         assert_eq!(db.search("hap", &[])[0].char, "😊");
+
+        // Case-insensitive search
+        assert_eq!(db.search("SMI", &[]).len(), 1);
+        assert_eq!(db.search("SMI", &[])[0].char, "🙂");
         
         // No match
         assert_eq!(db.search("xyz", &[]).len(), 0);

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schemalist>
+  <schema id="org.example.EmojiInput" path="/org/example/EmojiInput/">
+    <key name="trigger-char" type="s">
+      <default>':'</default>
+      <summary>Trigger character</summary>
+      <description>Character that opens emoji composition when typed in the input method.</description>
+    </key>
+  </schema>
+</schemalist>
