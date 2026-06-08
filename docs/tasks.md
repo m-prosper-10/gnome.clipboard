@@ -144,20 +144,20 @@ See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 
 **Goal**: Usability improvements, not decoration.
 
-**Current code note**: Recents tracking already exists in the engine, and the variant support surface is still minimal. Phase 5 is now about tightening that behavior, choosing a stable persistence story, and deciding how much of the picker UI should own variants versus the engine.
+**Current code note**: Recents are now frequency-ranked in the engine, and the popup exposes variants through a per-row chooser. Phase 5 is now about finishing persistence, polish, and any remaining cache/variant edge cases.
 
 See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase5-plan.md)
 
-- [ ] Recent emojis system
+- [x] Recent emojis system
   - [ ] Design persistence format (GSettings or local file)
-  - [ ] Implement recent emoji tracking
-  - [ ] Sort recents by frequency
-  - [ ] Display recents in UI (separate section or priority)
-  - [ ] Limit recents history size
-- [ ] Emoji variants support
-  - [ ] Identify emojis with skin tone modifiers
-  - [ ] Implement variant selection UI
-  - [ ] Add variant picker (long-press or submenu)
+  - [x] Implement recent emoji tracking
+  - [x] Sort recents by frequency
+  - [x] Display recents in UI (priority in results)
+  - [x] Limit recents history size
+- [x] Emoji variants support
+  - [x] Identify emojis with skin tone modifiers
+  - [x] Implement variant selection UI
+  - [x] Add variant picker (long-press or submenu)
   - [ ] Persist variant preferences
 - [ ] Cache management
   - [ ] Implement cache storage
@@ -170,6 +170,8 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 - ✅ Recents update correctly
 - ✅ Emoji variants selectable
 - ✅ No crashes after restart
+
+**Status**: Phase 5 implementation has started. Recents ranking and the variant chooser are in place; persistence, cache handling, and any remaining polish are still open.
 
 ---
 
