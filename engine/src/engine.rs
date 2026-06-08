@@ -23,6 +23,13 @@ pub struct EmojiDatabase {
     pub emojis: Vec<Emoji>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RecentEmoji {
+    pub char: String,
+    pub count: u32,
+    pub last_used: u64,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub trigger_char: String,
@@ -46,7 +53,8 @@ pub struct EmojiEngine {
     // Current selection index in results
     pub selected_index: usize,
     // Recently used emoji characters
-    pub recents: Vec<String>,
+    pub recents: Vec<RecentEmoji>,
+    pub recent_tick: u64,
     // Settings (trigger character, etc.)
     pub settings: Settings,
     /// Channel to forward UpdateResults to session bus for UI
@@ -54,6 +62,17 @@ pub struct EmojiEngine {
 }
 
 impl EmojiEngine {
+    fn canonical_usage_char(&self, committed: &str) -> String {
+        self.database
+            .emojis
+            .iter()
+            .find(|emoji| {
+                emoji.char == committed || emoji.variants.iter().any(|variant| variant == committed)
+            })
+            .map(|emoji| emoji.char.clone())
+            .unwrap_or_else(|| committed.to_string())
+    }
+
     pub fn new() -> Self {
         let mut engine = EmojiEngine {
             buffer: String::new(),
@@ -61,6 +80,7 @@ impl EmojiEngine {
             database: EmojiDatabase::default(),
             selected_index: 0,
             recents: Vec::new(),
+            recent_tick: 0,
             settings: Settings::default(),
             picker_tx: None,
         };
@@ -84,6 +104,7 @@ impl EmojiEngine {
             database,
             selected_index: 0,
             recents: Vec::new(),
+            recent_tick: 0,
             settings: Settings::default(),
             picker_tx,
         };
@@ -426,7 +447,7 @@ mod tests {
     }
 
     #[test]
-    fn test_variant_expansion() {
+    fn test_variant_search_keeps_base_result() {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
@@ -440,10 +461,9 @@ mod tests {
         };
 
         let results = db.search("thumb", &[]);
-        assert_eq!(results.len(), 3);
+        assert_eq!(results.len(), 1);
         assert_eq!(results[0].char, "👍");
-        assert_eq!(results[1].char, "👍🏻");
-        assert_eq!(results[2].char, "👍🏼");
+        assert_eq!(results[0].variants, vec!["👍🏻".to_string(), "👍🏼".to_string()]);
     }
 
     #[test]
@@ -462,14 +482,35 @@ mod tests {
         assert_eq!(results[0].char, "🙂");
         assert_eq!(results[1].char, "😊");
 
-        // Prioritize smile2
-        let results = db.search("smile", &["😊".to_string()]);
+        // Prioritize smile2 by usage count
+        let results = db.search(
+            "smile",
+            &[RecentEmoji {
+                char: "😊".to_string(),
+                count: 3,
+                last_used: 10,
+            }],
+        );
         assert_eq!(results[0].char, "😊");
         assert_eq!(results[1].char, "🙂");
         assert_eq!(results[2].char, "😄");
 
-        // Prioritize smile3 then smile2
-        let results = db.search("smile", &["😄".to_string(), "😊".to_string()]);
+        // Prioritize smile3 over smile2 when counts differ
+        let results = db.search(
+            "smile",
+            &[
+                RecentEmoji {
+                    char: "😄".to_string(),
+                    count: 5,
+                    last_used: 20,
+                },
+                RecentEmoji {
+                    char: "😊".to_string(),
+                    count: 3,
+                    last_used: 10,
+                },
+            ],
+        );
         assert_eq!(results[0].char, "😄");
         assert_eq!(results[1].char, "😊");
         assert_eq!(results[2].char, "🙂");
@@ -479,15 +520,53 @@ mod tests {
     fn test_recents_recording() {
         let mut engine = EmojiEngine::new();
         engine.recents = vec![];
+        engine.database = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji {
+                    char: "👍".to_string(),
+                    name: "thumbsup".to_string(),
+                    keywords: vec![],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                },
+            ],
+        };
         
         engine.record_usage("👍".to_string());
-        assert_eq!(engine.recents, vec!["👍".to_string()]);
+        assert_eq!(engine.recents.len(), 1);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 1);
 
         engine.record_usage("❤️".to_string());
-        assert_eq!(engine.recents, vec!["❤️".to_string(), "👍".to_string()]);
+        assert_eq!(engine.recents[0].char, "❤️");
+        assert_eq!(engine.recents[0].count, 1);
+        assert_eq!(engine.recents[1].char, "👍");
 
-        // Move to front if repeated
+        // Move to front and increment if repeated
         engine.record_usage("👍".to_string());
-        assert_eq!(engine.recents, vec!["👍".to_string(), "❤️".to_string()]);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 2);
+    }
+
+    #[test]
+    fn test_variant_usage_counts_toward_base_emoji() {
+        let mut engine = EmojiEngine::new();
+        engine.recents = vec![];
+        engine.database = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji {
+                    char: "👍".to_string(),
+                    name: "thumbsup".to_string(),
+                    keywords: vec![],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                },
+            ],
+        };
+
+        engine.record_usage("👍🏾".to_string());
+        assert_eq!(engine.recents.len(), 1);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 1);
     }
 }

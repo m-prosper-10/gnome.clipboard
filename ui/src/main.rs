@@ -17,7 +17,11 @@ pub struct Emoji {
     pub variants: Vec<String>,
 }
 
-fn build_row(emoji: &Emoji) -> gtk::ListBoxRow {
+fn build_row(
+    emoji: &Emoji,
+    commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
+    window: &gtk::Window,
+) -> gtk::ListBoxRow {
     let row = gtk::ListBoxRow::builder()
         .selectable(true)
         .activatable(true)
@@ -57,20 +61,71 @@ fn build_row(emoji: &Emoji) -> gtk::ListBoxRow {
     text_box.append(&name);
     text_box.append(&keywords);
 
-    outer.append(&glyph);
-    outer.append(&text_box);
+    let content = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+    content.set_hexpand(true);
+    content.append(&glyph);
+    content.append(&text_box);
+
+    if !emoji.variants.is_empty() {
+        let variants_popover = gtk::Popover::new();
+        variants_popover.set_has_arrow(true);
+        variants_popover.set_autohide(true);
+
+        let variants_box = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        variants_box.set_margin_top(8);
+        variants_box.set_margin_bottom(8);
+        variants_box.set_margin_start(8);
+        variants_box.set_margin_end(8);
+
+        for variant in &emoji.variants {
+            let variant_button = gtk::Button::with_label(variant);
+            variant_button.add_css_class("flat");
+
+            let commit_tx = commit_tx.clone();
+            let variant = variant.clone();
+            let popover = variants_popover.clone();
+            let window = window.clone();
+            variant_button.connect_clicked(move |_| {
+                let _ = commit_tx.try_send(variant.clone());
+                popover.popdown();
+                window.hide();
+            });
+
+            variants_box.append(&variant_button);
+        }
+
+        variants_popover.set_child(Some(&variants_box));
+
+        let variants_button = gtk::MenuButton::builder()
+            .label("Variants")
+            .popover(&variants_popover)
+            .build();
+        variants_button.add_css_class("flat");
+        variants_button.set_halign(gtk::Align::End);
+        variants_button.set_valign(gtk::Align::Center);
+
+        content.append(&variants_button);
+    }
+
+    outer.append(&content);
     row.set_child(Some(&outer));
 
     row
 }
 
-fn render_results(list_box: &gtk::ListBox, results: &[Emoji], selected_index: i32) {
+fn render_results(
+    list_box: &gtk::ListBox,
+    results: &[Emoji],
+    selected_index: i32,
+    commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
+    window: &gtk::Window,
+) {
     while let Some(child) = list_box.first_child() {
         list_box.remove(&child);
     }
 
     for emoji in results {
-        list_box.append(&build_row(emoji));
+        list_box.append(&build_row(emoji, commit_tx.clone(), window));
     }
 
     if let Some(row) = list_box.row_at_index(selected_index) {
@@ -261,6 +316,7 @@ async fn main() -> glib::ExitCode {
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
         let picker_token = picker_token.clone();
+        let commit_tx_for_render = commit_tx.clone();
 
         // Store current results for row-activated (click) lookup
         let results_store: Rc<RefCell<Vec<Emoji>>> = Rc::new(RefCell::new(Vec::new()));
@@ -389,13 +445,14 @@ async fn main() -> glib::ExitCode {
                                 let list_box = list_box_clone.clone();
                                 let window = window_clone.clone();
                                 let results_store = results_store.clone();
+                                let commit_tx = commit_tx_for_render.clone();
                                 
                                 glib::idle_add_local(move || {
                                     *results_store.borrow_mut() = results.clone();
                                     if results.is_empty() {
                                         window.hide();
                                     } else {
-                                        render_results(&list_box, &results, selected_index);
+                                        render_results(&list_box, &results, selected_index, commit_tx.clone(), &window);
                                         anchor_popup_window(&window);
                                         window.present();
                                         list_box.grab_focus();
