@@ -6,6 +6,8 @@ use gtk::glib;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -44,7 +46,12 @@ fn load_settings() -> Settings {
 fn save_settings(settings: &Settings) {
     if let Some(path) = get_config_path() {
         if let Ok(content) = serde_json::to_string_pretty(settings) {
-            let _ = std::fs::write(path, content);
+            let tmp_path = path.with_extension("json.tmp");
+            if let Ok(mut file) = File::create(&tmp_path) {
+                if file.write_all(content.as_bytes()).is_ok() {
+                    let _ = std::fs::rename(tmp_path, path);
+                }
+            }
         }
     }
 }

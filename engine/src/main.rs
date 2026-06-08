@@ -94,10 +94,8 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     info!("Loading emoji database from: {}", db_file);
-    let db_content = std::fs::read_to_string(&db_file)
-        .map_err(|e| format!("Failed to read emoji database {}: {}", db_file, e))?;
-    let database: engine::EmojiDatabase = serde_json::from_str(&db_content)
-        .map_err(|e| format!("Failed to parse emoji database: {}", e))?;
+    let database = engine::EmojiDatabase::load_from_source_with_cache(&db_file)
+        .map_err(|e| format!("Failed to load emoji database {}: {}", db_file, e))?;
     info!("Loaded {} emojis.", database.emojis.len());
 
     let addr_str = env::var("IBUS_ADDRESS")

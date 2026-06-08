@@ -77,9 +77,17 @@ fn build_row(
         variants_box.set_margin_start(8);
         variants_box.set_margin_end(8);
 
+        let variants_label = gtk::Label::new(Some("Choose variant"));
+        variants_label.set_xalign(0.0);
+        variants_label.add_css_class("caption");
+        variants_box.append(&variants_label);
+
         for variant in &emoji.variants {
             let variant_button = gtk::Button::with_label(variant);
             variant_button.add_css_class("flat");
+            variant_button.set_halign(gtk::Align::Fill);
+            variant_button.set_hexpand(true);
+            variant_button.set_tooltip_text(Some("Commit this variant"));
 
             let commit_tx = commit_tx.clone();
             let variant = variant.clone();
@@ -97,12 +105,13 @@ fn build_row(
         variants_popover.set_child(Some(&variants_box));
 
         let variants_button = gtk::MenuButton::builder()
-            .label("Variants")
+            .icon_name("view-more-symbolic")
             .popover(&variants_popover)
             .build();
         variants_button.add_css_class("flat");
         variants_button.set_halign(gtk::Align::End);
         variants_button.set_valign(gtk::Align::Center);
+        variants_button.set_tooltip_text(Some("Choose variant"));
 
         content.append(&variants_button);
     }
@@ -316,16 +325,14 @@ async fn main() -> glib::ExitCode {
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
         let picker_token = picker_token.clone();
-        let commit_tx_for_render = commit_tx.clone();
+        let (commit_tx_raw, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
+        let commit_tx = Rc::new(commit_tx_raw);
 
         // Store current results for row-activated (click) lookup
         let results_store: Rc<RefCell<Vec<Emoji>>> = Rc::new(RefCell::new(Vec::new()));
         let results_store_for_activate = results_store.clone();
         let window_for_activate = window.clone();
-
-        // Channel for click-to-commit (main thread -> async loop)
-        let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
-        let commit_tx = Rc::new(commit_tx);
+        let commit_tx_for_render = commit_tx.clone();
 
         list_box.connect_row_activated(move |_, row| {
             let index = row.index();
