@@ -100,6 +100,42 @@ fn move_selection(list_box: &gtk::ListBox, delta: i32) {
     }
 }
 
+fn active_popup_parent() -> Option<gtk::Window> {
+    gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|widget| widget.downcast::<gtk::Window>().ok())
+        .find(|window| window.is_active())
+}
+
+fn current_popup_parent() -> Option<gtk::Window> {
+    // Best-effort anchor: use the toplevel under the pointer when available.
+    let display = gtk::gdk::Display::default()?;
+    let seat = display.default_seat()?;
+    let pointer = seat.pointer()?;
+    let (surface, _, _) = pointer.surface_at_position();
+    let pointer_surface = surface?;
+    gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|widget| widget.downcast::<gtk::Window>().ok())
+        .find(|window| {
+            window
+                .native()
+                .and_then(|native| native.surface())
+                .is_some_and(|window_surface| {
+                    pointer_surface.as_ptr() == window_surface.as_ptr()
+                })
+        })
+}
+
+fn anchor_popup_window(window: &gtk::Window) {
+    let parent = current_popup_parent().or_else(active_popup_parent);
+    if let Some(parent) = parent {
+        if !std::ptr::eq(window.as_ptr(), parent.as_ptr()) {
+            window.set_transient_for(Some(&parent));
+        }
+    }
+}
+
 #[proxy(
     interface = "org.example.EmojiInput.Picker",
     default_service = "org.example.EmojiInput.Picker",
@@ -160,12 +196,19 @@ async fn main() -> glib::ExitCode {
             .default_width(360)
             .default_height(320)
             .decorated(false)
+            .hide_on_close(true)
             .resizable(false)
             .build();
         window.connect_close_request(|window| {
             window.hide();
             glib::Propagation::Stop
         });
+        window.connect_is_active_notify(|window| {
+            if !window.is_active() {
+                window.hide();
+            }
+        });
+        anchor_popup_window(&window);
 
         let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
         root.add_css_class("boxed-list");
@@ -222,6 +265,7 @@ async fn main() -> glib::ExitCode {
         // Store current results for row-activated (click) lookup
         let results_store: Rc<RefCell<Vec<Emoji>>> = Rc::new(RefCell::new(Vec::new()));
         let results_store_for_activate = results_store.clone();
+        let window_for_activate = window.clone();
 
         // Channel for click-to-commit (main thread -> async loop)
         let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
@@ -232,6 +276,7 @@ async fn main() -> glib::ExitCode {
             let results = results_store_for_activate.borrow();
             if let Some(emoji) = results.get(index as usize) {
                 let _ = commit_tx.try_send(emoji.char.clone());
+                window_for_activate.hide();
             }
         });
 
@@ -251,6 +296,7 @@ async fn main() -> glib::ExitCode {
                         let results = results_store_for_keys.borrow();
                         if let Some(emoji) = results.get(row.index() as usize) {
                             let _ = commit_tx_for_keys.try_send(emoji.char.clone());
+                            window_for_keys.hide();
                         }
                     }
                     glib::Propagation::Stop
@@ -261,6 +307,22 @@ async fn main() -> glib::ExitCode {
                 }
                 gtk::gdk::Key::Down => {
                     move_selection(&list_box_for_keys, 1);
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Left => {
+                    move_selection(&list_box_for_keys, -1);
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Right => {
+                    move_selection(&list_box_for_keys, 1);
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Tab => {
+                    move_selection(&list_box_for_keys, 1);
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::ISO_Left_Tab => {
+                    move_selection(&list_box_for_keys, -1);
                     glib::Propagation::Stop
                 }
                 _ => glib::Propagation::Proceed,
@@ -334,7 +396,9 @@ async fn main() -> glib::ExitCode {
                                         window.hide();
                                     } else {
                                         render_results(&list_box, &results, selected_index);
+                                        anchor_popup_window(&window);
                                         window.present();
+                                        list_box.grab_focus();
                                     }
                                     glib::ControlFlow::Break
                                 });

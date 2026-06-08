@@ -14,6 +14,7 @@ Turn the popup into a predictable, keyboard-friendly picker that feels native in
 ## Scope
 
 - Keep the engine as the source of truth for composition state and search results.
+- Keep the popup display-only; do not add a duplicate in-popup search entry.
 - Improve popup layout, placement, and selection behavior.
 - Make keyboard navigation explicit in the UI rather than relying on implicit listbox behavior.
 - Add a clean hide/show lifecycle so the popup never gets stuck open.

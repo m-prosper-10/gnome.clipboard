@@ -104,30 +104,30 @@
 
 **Goal**: Polish the popup GTK UI and harden engine-UI interaction.
 
-**Current code note**: The popup already exists as a basic session-bus-driven ListBox window. Phase 4 is now about positioning, explicit keyboard handling, closure behavior, and polishing the interaction loop rather than building the popup from scratch.
+**Current code note**: The popup now exists as a functional session-bus-driven picker. Phase 4 work is focused on placement, explicit keyboard handling, closure behavior, and interaction polish rather than protocol changes.
 
 See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase4-plan.md)
 
-- [ ] Create GTK popup window
-  - [ ] Initialize GTK application
-  - [ ] Create popup window widget
-  - [ ] Configure window properties (borderless, floating)
-  - [ ] Implement window positioning (near cursor or centered)
-- [ ] Build UI components
-  - [ ] Add search entry widget
-  - [ ] Create emoji grid/list view
-  - [ ] Implement emoji rendering
-  - [ ] Add visual selection indicator
-- [ ] Keyboard navigation
-  - [ ] Arrow key navigation (up/down/left/right)
-  - [ ] Enter key to commit selection
-  - [ ] Esc key to close popup
-  - [ ] Tab/Shift+Tab navigation
-- [ ] Engine-UI integration
-  - [ ] Connect engine to popup lifecycle
-  - [ ] Pass search results to UI
-  - [ ] Handle selection events
-  - [ ] Clean popup closure
+- [x] Create GTK popup window
+  - [x] Initialize GTK application
+  - [x] Create popup window widget
+  - [x] Configure window properties (borderless, floating)
+  - [x] Implement window positioning (near cursor or centered)
+- [x] Build UI components
+  - [x] Keep the popup display-only and engine-driven
+  - [x] Create emoji grid/list view
+  - [x] Implement emoji rendering
+  - [x] Add visual selection indicator
+- [x] Keyboard navigation
+  - [x] Arrow key navigation (up/down/left/right)
+  - [x] Enter key to commit selection
+  - [x] Esc key to close popup
+  - [x] Tab/Shift+Tab navigation
+- [x] Engine-UI integration
+  - [x] Connect engine to popup lifecycle
+  - [x] Pass search results to UI
+  - [x] Handle selection events
+  - [x] Clean popup closure
 
 **Deliverables**:
 
@@ -136,11 +136,17 @@ See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 - ✅ Enter commits selected emoji
 - ✅ Esc closes popup cleanly
 
+**Status**: Popup implementation is complete. Remaining work is live IBus/compositor verification and any polish that shows up during that testing.
+
 ---
 
 ## PHASE 5: Recents + Variants
 
 **Goal**: Usability improvements, not decoration.
+
+**Current code note**: Recents tracking already exists in the engine, and the variant support surface is still minimal. Phase 5 is now about tightening that behavior, choosing a stable persistence story, and deciding how much of the picker UI should own variants versus the engine.
+
+See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase5-plan.md)
 
 - [ ] Recent emojis system
   - [ ] Design persistence format (GSettings or local file)
