@@ -36,37 +36,6 @@ impl Default for Settings {
     }
 }
 
-impl EmojiDatabase {
-    pub fn search(&self, query: &str, recents: &[String]) -> Vec<Emoji> {
-        let query = query.trim().to_lowercase();
-        if query.is_empty() {
-            return Vec::new();
-        }
-        
-        let mut results = Vec::new();
-        for e in &self.emojis {
-            let name = e.name.to_lowercase();
-            let keywords_match = e.keywords.iter().any(|k| k.to_lowercase().starts_with(&query));
-            if name.starts_with(&query) || keywords_match {
-                results.push(e.clone());
-                for v in &e.variants {
-                    let mut ve = e.clone();
-                    ve.char = v.clone();
-                    ve.variants = vec![]; // No nested variants
-                    results.push(ve);
-                }
-            }
-        }
-
-        // Sort by recents: emojis in recents list come first
-        results.sort_by_key(|e| {
-            recents.iter().position(|r| r == &e.char).unwrap_or(usize::MAX)
-        });
-
-        results
-    }
-}
-
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
     pub buffer: String,

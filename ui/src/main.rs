@@ -17,6 +17,89 @@ pub struct Emoji {
     pub variants: Vec<String>,
 }
 
+fn build_row(emoji: &Emoji) -> gtk::ListBoxRow {
+    let row = gtk::ListBoxRow::builder()
+        .selectable(true)
+        .activatable(true)
+        .build();
+    row.add_css_class("emoji-row");
+
+    let outer = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+    outer.set_margin_top(8);
+    outer.set_margin_bottom(8);
+    outer.set_margin_start(10);
+    outer.set_margin_end(10);
+
+    let glyph = gtk::Label::new(Some(&emoji.char));
+    glyph.add_css_class("title-1");
+    glyph.set_width_chars(2);
+    glyph.set_xalign(0.0);
+    glyph.set_valign(gtk::Align::Center);
+
+    let text_box = gtk::Box::new(gtk::Orientation::Vertical, 2);
+    text_box.set_hexpand(true);
+
+    let name = gtk::Label::new(Some(&format!(":{}", emoji.name)));
+    name.set_xalign(0.0);
+    name.set_halign(gtk::Align::Start);
+    name.add_css_class("title-4");
+
+    let keywords_text = if emoji.keywords.is_empty() {
+        String::from(" ")
+    } else {
+        emoji.keywords.join(", ")
+    };
+    let keywords = gtk::Label::new(Some(&keywords_text));
+    keywords.set_xalign(0.0);
+    keywords.set_halign(gtk::Align::Start);
+    keywords.add_css_class("caption");
+
+    text_box.append(&name);
+    text_box.append(&keywords);
+
+    outer.append(&glyph);
+    outer.append(&text_box);
+    row.set_child(Some(&outer));
+
+    row
+}
+
+fn render_results(list_box: &gtk::ListBox, results: &[Emoji], selected_index: i32) {
+    while let Some(child) = list_box.first_child() {
+        list_box.remove(&child);
+    }
+
+    for emoji in results {
+        list_box.append(&build_row(emoji));
+    }
+
+    if let Some(row) = list_box.row_at_index(selected_index) {
+        list_box.select_row(Some(&row));
+    }
+}
+
+fn row_count(list_box: &gtk::ListBox) -> i32 {
+    let mut count = 0;
+    while list_box.row_at_index(count).is_some() {
+        count += 1;
+    }
+    count
+}
+
+fn move_selection(list_box: &gtk::ListBox, delta: i32) {
+    let count = row_count(list_box);
+    if count == 0 {
+        return;
+    }
+
+    let current = list_box.selected_row().map(|row| row.index()).unwrap_or(0);
+    let next = (current + delta).rem_euclid(count);
+    if let Some(row) = list_box.row_at_index(next) {
+        list_box.select_row(Some(&row));
+        row.grab_focus();
+    }
+}
+
 #[proxy(
     interface = "org.example.EmojiInput.Picker",
     default_service = "org.example.EmojiInput.Picker",
@@ -46,23 +129,90 @@ async fn main() -> glib::ExitCode {
         .build();
 
     application.connect_activate(move |app| {
+        let css = gtk::CssProvider::new();
+        css.load_from_data(
+            "
+            window {
+                border-radius: 16px;
+            }
+            .emoji-row {
+                border-radius: 12px;
+            }
+            .emoji-row:selected {
+                background: alpha(@accent_bg_color, 0.18);
+            }
+            .caption {
+                opacity: 0.72;
+            }
+            "
+        );
+        if let Some(display) = gtk::gdk::Display::default() {
+            gtk::style_context_add_provider_for_display(
+                &display,
+                &css,
+                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+            );
+        }
+
         let window = gtk::Window::builder()
             .application(app)
             .title("Emoji Picker")
-            .default_width(300)
-            .default_height(400)
+            .default_width(360)
+            .default_height(320)
             .decorated(false)
-            .can_focus(false)
+            .resizable(false)
             .build();
-        let list_box = gtk::ListBox::builder()
-            .margin_top(10)
-            .margin_bottom(10)
-            .margin_start(10)
-            .margin_end(10)
-            .build();
-        list_box.set_can_focus(false);
+        window.connect_close_request(|window| {
+            window.hide();
+            glib::Propagation::Stop
+        });
 
-        window.set_child(Some(&list_box));
+        let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        root.add_css_class("boxed-list");
+
+        let header = gtk::Box::new(gtk::Orientation::Vertical, 2);
+        header.set_margin_top(12);
+        header.set_margin_bottom(4);
+        header.set_margin_start(14);
+        header.set_margin_end(14);
+
+        let title = gtk::Label::new(Some("Emoji Picker"));
+        title.set_xalign(0.0);
+        title.add_css_class("title-4");
+
+        let subtitle = gtk::Label::new(Some("Enter to commit, Esc to close"));
+        subtitle.set_xalign(0.0);
+        subtitle.add_css_class("caption");
+
+        header.append(&title);
+        header.append(&subtitle);
+
+        let scroller = gtk::ScrolledWindow::builder()
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .vscrollbar_policy(gtk::PolicyType::Automatic)
+            .min_content_height(220)
+            .build();
+
+        let list_box = gtk::ListBox::builder().build();
+        list_box.add_css_class("navigation-sidebar");
+        list_box.set_selection_mode(gtk::SelectionMode::Single);
+        list_box.set_can_focus(true);
+        list_box.set_focus_on_click(true);
+        list_box.set_activate_on_single_click(true);
+        scroller.set_child(Some(&list_box));
+
+        let footer = gtk::Label::new(Some("Select with mouse or arrow keys"));
+        footer.set_margin_top(4);
+        footer.set_margin_bottom(10);
+        footer.set_margin_start(14);
+        footer.set_margin_end(14);
+        footer.set_xalign(0.0);
+        footer.add_css_class("caption");
+
+        root.append(&header);
+        root.append(&scroller);
+        root.append(&footer);
+        window.set_child(Some(&root));
 
         let window_clone = window.clone();
         let list_box_clone = list_box.clone();
@@ -84,6 +234,39 @@ async fn main() -> glib::ExitCode {
                 let _ = commit_tx.try_send(emoji.char.clone());
             }
         });
+
+        let window_for_keys = window.clone();
+        let list_box_for_keys = list_box.clone();
+        let results_store_for_keys = results_store.clone();
+        let commit_tx_for_keys = commit_tx.clone();
+        let key_controller = gtk::EventControllerKey::new();
+        key_controller.connect_key_pressed(move |_, keyval, _, _| {
+            match keyval {
+                gtk::gdk::Key::Escape => {
+                    window_for_keys.hide();
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Return | gtk::gdk::Key::KP_Enter => {
+                    if let Some(row) = list_box_for_keys.selected_row() {
+                        let results = results_store_for_keys.borrow();
+                        if let Some(emoji) = results.get(row.index() as usize) {
+                            let _ = commit_tx_for_keys.try_send(emoji.char.clone());
+                        }
+                    }
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Up => {
+                    move_selection(&list_box_for_keys, -1);
+                    glib::Propagation::Stop
+                }
+                gtk::gdk::Key::Down => {
+                    move_selection(&list_box_for_keys, 1);
+                    glib::Propagation::Stop
+                }
+                _ => glib::Propagation::Proceed,
+            }
+        });
+        list_box.add_controller(key_controller);
 
         // Run DBus listener on the main thread (local task)
         // Use session bus - engine forwards UpdateResults there (IBus bus not visible to GTK app)
@@ -150,17 +333,7 @@ async fn main() -> glib::ExitCode {
                                     if results.is_empty() {
                                         window.hide();
                                     } else {
-                                        while let Some(child) = list_box.first_child() {
-                                            list_box.remove(&child);
-                                        }
-                                        for emoji in &results {
-                                            let label = gtk::Label::new(Some(&format!("{} :{}", emoji.char, emoji.name)));
-                                            label.set_halign(gtk::Align::Start);
-                                            list_box.append(&label);
-                                        }
-                                        if let Some(row) = list_box.row_at_index(selected_index) {
-                                            list_box.select_row(Some(&row));
-                                        }
+                                        render_results(&list_box, &results, selected_index);
                                         window.present();
                                     }
                                     glib::ControlFlow::Break
