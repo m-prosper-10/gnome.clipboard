@@ -22,7 +22,23 @@ pub struct Emoji {
 const SETTINGS_SCHEMA_ID: &str = "org.example.EmojiInput";
 const VARIANT_PREFS_KEY: &str = "variant-preferences";
 
-fn load_variant_preferences(settings: &gio::Settings) -> HashMap<String, String> {
+fn settings_backend() -> Option<gio::Settings> {
+    let schema = gio::SettingsSchemaSource::default()
+        .and_then(|source| source.lookup(SETTINGS_SCHEMA_ID, true));
+    if schema.is_none() {
+        warn!(
+            "GSettings schema '{}' is unavailable; variant preferences are disabled",
+            SETTINGS_SCHEMA_ID
+        );
+    }
+    schema.map(|_| gio::Settings::new(SETTINGS_SCHEMA_ID))
+}
+
+fn load_variant_preferences(settings: Option<&gio::Settings>) -> HashMap<String, String> {
+    let Some(settings) = settings else {
+        return HashMap::new();
+    };
+
     settings
         .strv(VARIANT_PREFS_KEY)
         .into_iter()
@@ -34,7 +50,11 @@ fn load_variant_preferences(settings: &gio::Settings) -> HashMap<String, String>
         .collect()
 }
 
-fn save_variant_preferences(settings: &gio::Settings, prefs: &HashMap<String, String>) {
+fn save_variant_preferences(settings: Option<&gio::Settings>, prefs: &HashMap<String, String>) {
+    let Some(settings) = settings else {
+        return;
+    };
+
     let values: Vec<String> = prefs
         .iter()
         .map(|(base, variant)| format!("{}={}", base, variant))
@@ -47,7 +67,7 @@ fn build_row(
     emoji: &Emoji,
     commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
     window: &gtk::Window,
-    variant_settings: gio::Settings,
+    variant_settings: Option<gio::Settings>,
     variant_prefs: Rc<RefCell<HashMap<String, String>>>,
 ) -> gtk::ListBoxRow {
     let row = gtk::ListBoxRow::builder()
@@ -140,7 +160,7 @@ fn build_row(
                 {
                     let mut prefs = variant_prefs.borrow_mut();
                     prefs.insert(base_char.clone(), variant.clone());
-                    save_variant_preferences(&variant_settings, &prefs);
+                    save_variant_preferences(variant_settings.as_ref(), &prefs);
                 }
                 let _ = commit_tx.try_send(variant.clone());
                 popover.popdown();
@@ -176,7 +196,7 @@ fn render_results(
     selected_index: i32,
     commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
     window: &gtk::Window,
-    variant_settings: gio::Settings,
+    variant_settings: Option<gio::Settings>,
     variant_prefs: Rc<RefCell<HashMap<String, String>>>,
 ) {
     while let Some(child) = list_box.first_child() {
@@ -381,12 +401,14 @@ async fn main() -> glib::ExitCode {
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
         let picker_token = picker_token.clone();
-        let variant_settings = gio::Settings::new(SETTINGS_SCHEMA_ID);
-        let variant_prefs = Rc::new(RefCell::new(load_variant_preferences(&variant_settings)));
+        let variant_settings = settings_backend();
+        let variant_prefs = Rc::new(RefCell::new(load_variant_preferences(variant_settings.as_ref())));
         let variant_prefs_for_signal = variant_prefs.clone();
-        variant_settings.connect_changed(Some(VARIANT_PREFS_KEY), move |settings, _| {
-            *variant_prefs_for_signal.borrow_mut() = load_variant_preferences(settings);
-        });
+        if let Some(settings) = variant_settings.as_ref() {
+            settings.connect_changed(Some(VARIANT_PREFS_KEY), move |settings, _| {
+                *variant_prefs_for_signal.borrow_mut() = load_variant_preferences(Some(settings));
+            });
+        }
         let (commit_tx_raw, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
         let commit_tx = Rc::new(commit_tx_raw);
 

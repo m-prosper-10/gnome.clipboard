@@ -29,7 +29,17 @@ fn gsettings() -> gio::Settings {
     gio::Settings::new(SETTINGS_SCHEMA_ID)
 }
 
-fn load_settings(settings: &gio::Settings) -> Settings {
+fn try_gsettings() -> Option<gio::Settings> {
+    gio::SettingsSchemaSource::default()
+        .and_then(|source| source.lookup(SETTINGS_SCHEMA_ID, true))
+        .map(|_| gsettings())
+}
+
+fn load_settings(settings: Option<&gio::Settings>) -> Settings {
+    let Some(settings) = settings else {
+        return Settings::default();
+    };
+
     let trigger_char = settings.string(SETTINGS_TRIGGER_CHAR).to_string();
     if trigger_char.is_empty() {
         Settings::default()
@@ -38,8 +48,10 @@ fn load_settings(settings: &gio::Settings) -> Settings {
     }
 }
 
-fn save_settings(settings: &gio::Settings, value: &Settings) {
-    let _ = settings.set_string(SETTINGS_TRIGGER_CHAR, &value.trigger_char);
+fn save_settings(settings: Option<&gio::Settings>, value: &Settings) {
+    if let Some(settings) = settings {
+        let _ = settings.set_string(SETTINGS_TRIGGER_CHAR, &value.trigger_char);
+    }
 }
 
 fn get_recents_path() -> Option<PathBuf> {
@@ -64,8 +76,8 @@ async fn main() -> glib::ExitCode {
         .build();
 
     application.connect_activate(|app| {
-        let settings_backend = gsettings();
-        let settings = load_settings(&settings_backend);
+        let settings_backend = try_gsettings();
+        let settings = load_settings(settings_backend.as_ref());
         
         // Window
         let window = adw::ApplicationWindow::builder()
@@ -84,6 +96,20 @@ async fn main() -> glib::ExitCode {
         let page = adw::PreferencesPage::new();
         content.append(&page);
 
+        if settings_backend.is_none() {
+            let status_group = adw::PreferencesGroup::builder()
+                .title("Status")
+                .build();
+            page.add(&status_group);
+
+            let status_label = gtk::Label::new(Some(
+                "GSettings schema is not installed yet. Defaults are shown, but preference changes will not persist.",
+            ));
+            status_label.set_wrap(true);
+            status_label.set_xalign(0.0);
+            status_group.add(&status_label);
+        }
+
         // General Group
         let general_group = adw::PreferencesGroup::builder()
             .title("General")
@@ -97,9 +123,9 @@ async fn main() -> glib::ExitCode {
         
         let settings_backend = settings_backend.clone();
         trigger_row.connect_apply(move |row: &adw::EntryRow| {
-            let mut s = load_settings(&settings_backend);
+            let mut s = load_settings(settings_backend.as_ref());
             s.trigger_char = row.text().to_string();
-            save_settings(&settings_backend, &s);
+            save_settings(settings_backend.as_ref(), &s);
         });
         general_group.add(&trigger_row);
 
@@ -138,8 +164,10 @@ async fn main() -> glib::ExitCode {
             .build();
         let settings_backend = settings_backend.clone();
         clear_variants_button.connect_clicked(move |_| {
-            let empty: [&str; 0] = [];
-            let _ = settings_backend.set_strv(VARIANT_PREFS_KEY, &empty);
+            if let Some(settings) = settings_backend.as_ref() {
+                let empty: [&str; 0] = [];
+                let _ = settings.set_strv(VARIANT_PREFS_KEY, &empty);
+            }
         });
         variants_group.add(&clear_variants_button);
 

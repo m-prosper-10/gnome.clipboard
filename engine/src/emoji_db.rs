@@ -9,12 +9,20 @@ use gio::prelude::*;
 use log::{debug, error, warn};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::UNIX_EPOCH;
 
 pub use super::{Emoji, EmojiDatabase, RecentEmoji, Settings};
 
 const SETTINGS_SCHEMA_ID: &str = "org.example.EmojiInput";
 const SETTINGS_TRIGGER_CHAR: &str = "trigger-char";
+static MISSING_SETTINGS_SCHEMA_WARNED: AtomicBool = AtomicBool::new(false);
+
+fn settings_available() -> bool {
+    gio::SettingsSchemaSource::default()
+        .and_then(|source| source.lookup(SETTINGS_SCHEMA_ID, true))
+        .is_some()
+}
 
 fn file_mtime(path: &Path) -> Option<u64> {
     let modified = std::fs::metadata(path).ok()?.modified().ok()?;
@@ -108,6 +116,16 @@ struct EmojiDatabaseCache {
 impl EmojiEngine {
     pub fn load_settings(&mut self) {
         self.settings = Settings::default();
+        if !settings_available() {
+            if !MISSING_SETTINGS_SCHEMA_WARNED.swap(true, Ordering::Relaxed) {
+                warn!(
+                    "GSettings schema '{}' is unavailable; using default settings",
+                    SETTINGS_SCHEMA_ID
+                );
+            }
+            return;
+        }
+
         let settings = gio::Settings::new(SETTINGS_SCHEMA_ID);
         let trigger_char = settings.string(SETTINGS_TRIGGER_CHAR).to_string();
         if !trigger_char.is_empty() {
