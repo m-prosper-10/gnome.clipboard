@@ -6,14 +6,99 @@
 
 use super::{search, EmojiEngine};
 use log::{debug, error, warn};
-use std::path::PathBuf;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::time::UNIX_EPOCH;
 
 pub use super::{Emoji, EmojiDatabase, RecentEmoji, Settings};
+
+fn file_mtime(path: &Path) -> Option<u64> {
+    let modified = std::fs::metadata(path).ok()?.modified().ok()?;
+    modified.duration_since(UNIX_EPOCH).ok().map(|d| d.as_secs())
+}
+
+fn write_atomic(path: &Path, content: &str) -> std::io::Result<()> {
+    let tmp_path = path.with_extension("tmp");
+    let mut file = std::fs::File::create(&tmp_path)?;
+    file.write_all(content.as_bytes())?;
+    file.sync_all()?;
+    std::fs::rename(tmp_path, path)
+}
 
 impl EmojiDatabase {
     pub fn search(&self, query: &str, recents: &[RecentEmoji]) -> Vec<Emoji> {
         search::search(self, query, recents)
     }
+
+    pub fn load_from_source_with_cache(source_path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let source = Path::new(source_path);
+        let source_exists = source.exists();
+        let source_mtime = file_mtime(source).unwrap_or(0);
+
+        if let Some(cache_path) = Self::get_cache_path() {
+            if cache_path.exists() {
+                match std::fs::read_to_string(&cache_path) {
+                    Ok(content) => match serde_json::from_str::<EmojiDatabaseCache>(&content) {
+                        Ok(cache) if !source_exists || cache.source_mtime == source_mtime => {
+                            debug!("Loaded emoji database from cache {:?}", cache_path);
+                            return Ok(cache.database);
+                        }
+                        Ok(_) => {
+                            debug!("Emoji database cache {:?} is stale, rebuilding.", cache_path);
+                        }
+                        Err(e) => {
+                            warn!("Failed to parse emoji cache at {:?}: {}. Rebuilding.", cache_path, e);
+                        }
+                    },
+                    Err(e) => {
+                        warn!("Failed to read emoji cache at {:?}: {}. Rebuilding.", cache_path, e);
+                    }
+                }
+            }
+        }
+
+        let content = std::fs::read_to_string(source)?;
+        let database: EmojiDatabase = serde_json::from_str(&content)?;
+        Self::save_cache(&database, source_mtime);
+        Ok(database)
+    }
+
+    fn get_cache_path() -> Option<PathBuf> {
+        let home = std::env::var("HOME").ok()?;
+        let path = PathBuf::from(home)
+            .join(".cache")
+            .join("gnome-emoji-input")
+            .join("emoji-db-cache.json");
+
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        Some(path)
+    }
+
+    fn save_cache(database: &EmojiDatabase, source_mtime: u64) {
+        if let Some(cache_path) = Self::get_cache_path() {
+            let cache = EmojiDatabaseCache {
+                source_mtime,
+                database: database.clone(),
+            };
+            match serde_json::to_string(&cache) {
+                Ok(content) => {
+                    if let Err(e) = write_atomic(&cache_path, &content) {
+                        warn!("Failed to save emoji cache to {:?}: {}", cache_path, e);
+                    }
+                }
+                Err(e) => warn!("Failed to serialize emoji cache: {}", e),
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct EmojiDatabaseCache {
+    source_mtime: u64,
+    database: EmojiDatabase,
 }
 
 impl EmojiEngine {
@@ -27,7 +112,9 @@ impl EmojiEngine {
     }
 
     pub fn load_settings(&mut self) {
+        self.settings = Settings::default();
         if let Some(path) = Self::get_config_path() {
+            let current_mtime = file_mtime(&path);
             if path.exists() {
                 debug!("Loading settings from {:?}", path);
                 match std::fs::read_to_string(&path) {
@@ -42,7 +129,12 @@ impl EmojiEngine {
             } else {
                 debug!("Settings file {:?} not found, using defaults.", path);
             }
+            self.settings_mtime = current_mtime;
         }
+    }
+
+    pub fn settings_file_mtime(&self) -> Option<u64> {
+        Self::get_config_path().and_then(|path| file_mtime(&path))
     }
 
     fn get_recents_path() -> Option<PathBuf> {
@@ -95,7 +187,7 @@ impl EmojiEngine {
         if let Some(path) = Self::get_recents_path() {
             match serde_json::to_string(&self.recents) {
                 Ok(content) => {
-                    if let Err(e) = std::fs::write(&path, content) {
+                    if let Err(e) = write_atomic(&path, &content) {
                         error!("Failed to save recents to {:?}: {}", path, e);
                     }
                 }

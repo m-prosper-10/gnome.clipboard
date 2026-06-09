@@ -159,11 +159,11 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
   - [x] Implement variant selection UI
   - [x] Add variant picker (long-press or submenu)
   - [ ] Persist variant preferences
-- [ ] Cache management
-  - [ ] Implement cache storage
-  - [ ] Load cache on startup
-  - [ ] Save cache on changes
-  - [ ] Handle cache corruption gracefully
+- [x] Cache management
+  - [x] Implement cache storage
+  - [x] Load cache on startup
+  - [x] Save cache on changes
+  - [x] Handle cache corruption gracefully
 
 **Deliverables**:
 
@@ -179,7 +179,7 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 
 **Goal**: Separation of concerns - dedicated settings UI.
 
-**Current code note**: The prefs app already exists, but it still persists settings to local JSON files in `~/.config/gnome-emoji-input/` and `~/.cache/gnome-emoji-input/`. The GSettings schema file is present for packaging, but the app is not yet wired to it.
+**Current code note**: The prefs app already exists, and the engine now watches the local JSON settings file for changes so trigger updates apply without a restart. The GSettings schema file is present for packaging, but the app is not yet wired to it.
 
 - [ ] Implement `ui/` GTK preferences app
   - [ ] Create standalone GTK application
