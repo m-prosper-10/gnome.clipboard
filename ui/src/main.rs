@@ -1,9 +1,11 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
 use zbus::proxy;
+use gio::prelude::*;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::env;
 use std::rc::Rc;
 use log::{info, error, debug, warn};
@@ -17,10 +19,36 @@ pub struct Emoji {
     pub variants: Vec<String>,
 }
 
+const SETTINGS_SCHEMA_ID: &str = "org.example.EmojiInput";
+const VARIANT_PREFS_KEY: &str = "variant-preferences";
+
+fn load_variant_preferences(settings: &gio::Settings) -> HashMap<String, String> {
+    settings
+        .strv(VARIANT_PREFS_KEY)
+        .into_iter()
+        .filter_map(|entry| {
+            entry
+                .split_once('=')
+                .map(|(base, variant)| (base.to_string(), variant.to_string()))
+        })
+        .collect()
+}
+
+fn save_variant_preferences(settings: &gio::Settings, prefs: &HashMap<String, String>) {
+    let values: Vec<String> = prefs
+        .iter()
+        .map(|(base, variant)| format!("{}={}", base, variant))
+        .collect();
+    let refs: Vec<&str> = values.iter().map(|value| value.as_str()).collect();
+    let _ = settings.set_strv(VARIANT_PREFS_KEY, &refs);
+}
+
 fn build_row(
     emoji: &Emoji,
     commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
     window: &gtk::Window,
+    variant_settings: gio::Settings,
+    variant_prefs: Rc<RefCell<HashMap<String, String>>>,
 ) -> gtk::ListBoxRow {
     let row = gtk::ListBoxRow::builder()
         .selectable(true)
@@ -82,18 +110,38 @@ fn build_row(
         variants_label.add_css_class("caption");
         variants_box.append(&variants_label);
 
-        for variant in &emoji.variants {
-            let variant_button = gtk::Button::with_label(variant);
+        let preferred_variant = variant_prefs.borrow().get(&emoji.char).cloned();
+        let mut variants = emoji.variants.clone();
+        variants.sort_by_key(|variant| {
+            if preferred_variant.as_deref() == Some(variant.as_str()) {
+                0
+            } else {
+                1
+            }
+        });
+
+        for variant in variants {
+            let variant_button = gtk::Button::with_label(&variant);
             variant_button.add_css_class("flat");
             variant_button.set_halign(gtk::Align::Fill);
             variant_button.set_hexpand(true);
             variant_button.set_tooltip_text(Some("Commit this variant"));
+            if preferred_variant.as_deref() == Some(variant.as_str()) {
+                variant_button.add_css_class("suggested-action");
+            }
 
             let commit_tx = commit_tx.clone();
-            let variant = variant.clone();
+            let variant_settings = variant_settings.clone();
+            let variant_prefs = variant_prefs.clone();
+            let base_char = emoji.char.clone();
             let popover = variants_popover.clone();
             let window = window.clone();
             variant_button.connect_clicked(move |_| {
+                {
+                    let mut prefs = variant_prefs.borrow_mut();
+                    prefs.insert(base_char.clone(), variant.clone());
+                    save_variant_preferences(&variant_settings, &prefs);
+                }
                 let _ = commit_tx.try_send(variant.clone());
                 popover.popdown();
                 window.hide();
@@ -128,13 +176,21 @@ fn render_results(
     selected_index: i32,
     commit_tx: Rc<tokio::sync::mpsc::Sender<String>>,
     window: &gtk::Window,
+    variant_settings: gio::Settings,
+    variant_prefs: Rc<RefCell<HashMap<String, String>>>,
 ) {
     while let Some(child) = list_box.first_child() {
         list_box.remove(&child);
     }
 
     for emoji in results {
-        list_box.append(&build_row(emoji, commit_tx.clone(), window));
+        list_box.append(&build_row(
+            emoji,
+            commit_tx.clone(),
+            window,
+            variant_settings.clone(),
+            variant_prefs.clone(),
+        ));
     }
 
     if let Some(row) = list_box.row_at_index(selected_index) {
@@ -325,6 +381,12 @@ async fn main() -> glib::ExitCode {
         let list_box_clone = list_box.clone();
         let app_clone = app.clone();
         let picker_token = picker_token.clone();
+        let variant_settings = gio::Settings::new(SETTINGS_SCHEMA_ID);
+        let variant_prefs = Rc::new(RefCell::new(load_variant_preferences(&variant_settings)));
+        let variant_prefs_for_signal = variant_prefs.clone();
+        variant_settings.connect_changed(Some(VARIANT_PREFS_KEY), move |settings, _| {
+            *variant_prefs_for_signal.borrow_mut() = load_variant_preferences(settings);
+        });
         let (commit_tx_raw, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
         let commit_tx = Rc::new(commit_tx_raw);
 
@@ -453,13 +515,23 @@ async fn main() -> glib::ExitCode {
                                 let window = window_clone.clone();
                                 let results_store = results_store.clone();
                                 let commit_tx = commit_tx_for_render.clone();
+                                let variant_settings = variant_settings.clone();
+                                let variant_prefs = variant_prefs.clone();
                                 
                                 glib::idle_add_local(move || {
                                     *results_store.borrow_mut() = results.clone();
                                     if results.is_empty() {
                                         window.hide();
                                     } else {
-                                        render_results(&list_box, &results, selected_index, commit_tx.clone(), &window);
+                                        render_results(
+                                            &list_box,
+                                            &results,
+                                            selected_index,
+                                            commit_tx.clone(),
+                                            &window,
+                                            variant_settings.clone(),
+                                            variant_prefs.clone(),
+                                        );
                                         anchor_popup_window(&window);
                                         window.present();
                                         list_box.grab_focus();

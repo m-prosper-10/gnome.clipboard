@@ -106,15 +106,6 @@ struct EmojiDatabaseCache {
 }
 
 impl EmojiEngine {
-    fn get_config_path() -> Option<PathBuf> {
-        let home = std::env::var("HOME").ok()?;
-        let path = PathBuf::from(home)
-            .join(".config")
-            .join("gnome-emoji-input")
-            .join("settings.json");
-        Some(path)
-    }
-
     pub fn load_settings(&mut self) {
         self.settings = Settings::default();
         let settings = gio::Settings::new(SETTINGS_SCHEMA_ID);

@@ -26,6 +26,8 @@ if get_option('install_gschema')
   install_data('org.example.EmojiInput.gschema.xml',
     install_dir: datadir / 'glib-2.0' / 'schemas'
   )
+  glib_compile_schemas = find_program('glib-compile-schemas', required: true)
+  meson.add_install_script(glib_compile_schemas, datadir / 'glib-2.0' / 'schemas')
 endif
 
 # Emoji database
