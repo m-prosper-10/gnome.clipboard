@@ -149,7 +149,7 @@ See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase5-plan.md)
 
 - [x] Recent emojis system
-  - [ ] Design persistence format (GSettings or local file)
+  - [x] Design persistence format (mixed: GSettings for prefs, local files for recents/cache)
   - [x] Implement recent emoji tracking
   - [x] Sort recents by frequency
   - [x] Display recents in UI (priority in results)
@@ -171,7 +171,7 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 - ✅ Emoji variants selectable
 - ✅ No crashes after restart
 
-**Status**: Phase 5 implementation has started. Recents ranking and the variant chooser are in place; persistence, cache handling, and any remaining polish are still open.
+**Status**: Phase 5 is implemented in code. Recents ranking, cache handling, and persisted variant preferences are in place; the remaining work is live verification and any UX cleanup found there.
 
 ---
 
@@ -213,7 +213,7 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 
 **Goal**: Feels native to GNOME.
 
-**Current code note**: The packaged component file for the IBus engine is installed, and the main desktop/schema placeholder state has been cleaned up. The remaining packaging work is around finishing the desktop integration story and moving prefs to GSettings if that is still the intended direction.
+**Current code note**: The packaged component file for the IBus engine is installed, the GSettings schema is real and compiled at install time, and prefs already use GSettings for trigger and variant preferences. The remaining packaging work is around the desktop integration story and installation validation.
 
 - [ ] Desktop integration
   - [ ] Create `.desktop` file
