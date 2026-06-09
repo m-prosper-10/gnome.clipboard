@@ -69,19 +69,19 @@ The engine is ready but needs manual verification:
 ### Not Yet Implemented
 
 - **Manual IBus verification**: The code path is implemented, but the engine still needs to be exercised in a live GNOME/IBus session
-- **GSettings-backed preferences**: The prefs app still stores settings in local JSON files
+- **GSettings-backed preferences**: The prefs app and engine now read trigger and variant preferences from GSettings
 - **Full packaging polish**: Desktop integration and schema installation are still partial
 
 ## Known Limitations
 
-1. **No full GSettings migration**: Preferences still read/write local JSON files
+1. **Partial GSettings migration**: trigger and variant preferences use GSettings, but recents/cache data still use local files
 2. **Session-bus bridge is instance-scoped, not authenticated**: The token prevents accidental cross-instance commits, not hostile same-user access
 3. **Packaging assets are still evolving**: The main desktop file is not present yet
 
 ## Next Steps
 
 ### If Manual Testing Succeeds ✅
-1. Migrate prefs storage from local JSON to GSettings
+1. Decide whether any remaining settings should move into GSettings or stay in the local cache
 2. Add the main desktop entry and finish packaging polish
 3. Expand search and selection behavior
 4. Test emoji insertion in real applications

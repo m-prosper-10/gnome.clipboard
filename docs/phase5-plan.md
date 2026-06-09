@@ -2,7 +2,7 @@
 
 Phase 4 gives the popup a usable shape. Phase 5 should make the picker feel smarter without turning it into a different product.
 
-Current implementation note: recents are now frequency-ranked in the engine, and the popup exposes variants through a per-row chooser. The remaining work is persistence polish, cache hardening, and any UX edge cases that show up in real sessions.
+Current implementation note: recents are now frequency-ranked in the engine, the popup exposes variants through a per-row chooser, and preferred variants are stored in GSettings. The remaining work is cache hardening and any UX edge cases that show up in real sessions.
 
 ## Recents
 
