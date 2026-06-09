@@ -5,12 +5,16 @@
 //! the engine event loop can stay focused on IBus state transitions.
 
 use super::{search, EmojiEngine};
+use gio::prelude::*;
 use log::{debug, error, warn};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 pub use super::{Emoji, EmojiDatabase, RecentEmoji, Settings};
+
+const SETTINGS_SCHEMA_ID: &str = "org.example.EmojiInput";
+const SETTINGS_TRIGGER_CHAR: &str = "trigger-char";
 
 fn file_mtime(path: &Path) -> Option<u64> {
     let modified = std::fs::metadata(path).ok()?.modified().ok()?;
@@ -113,28 +117,12 @@ impl EmojiEngine {
 
     pub fn load_settings(&mut self) {
         self.settings = Settings::default();
-        if let Some(path) = Self::get_config_path() {
-            let current_mtime = file_mtime(&path);
-            if path.exists() {
-                debug!("Loading settings from {:?}", path);
-                match std::fs::read_to_string(&path) {
-                    Ok(content) => {
-                        match serde_json::from_str::<Settings>(&content) {
-                            Ok(settings) => self.settings = settings,
-                            Err(e) => warn!("Failed to parse settings at {:?}: {}. Using defaults.", path, e),
-                        }
-                    }
-                    Err(e) => error!("Failed to read settings file at {:?}: {}", path, e),
-                }
-            } else {
-                debug!("Settings file {:?} not found, using defaults.", path);
-            }
-            self.settings_mtime = current_mtime;
+        let settings = gio::Settings::new(SETTINGS_SCHEMA_ID);
+        let trigger_char = settings.string(SETTINGS_TRIGGER_CHAR).to_string();
+        if !trigger_char.is_empty() {
+            self.settings.trigger_char = trigger_char;
+            debug!("Loaded trigger char from GSettings");
         }
-    }
-
-    pub fn settings_file_mtime(&self) -> Option<u64> {
-        Self::get_config_path().and_then(|path| file_mtime(&path))
     }
 
     fn get_recents_path() -> Option<PathBuf> {

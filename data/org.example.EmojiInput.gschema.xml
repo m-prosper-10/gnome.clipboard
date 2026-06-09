@@ -6,5 +6,10 @@
       <summary>Trigger character</summary>
       <description>Character that opens emoji composition when typed in the input method.</description>
     </key>
+    <key name="variant-preferences" type="as">
+      <default>[]</default>
+      <summary>Preferred emoji variants</summary>
+      <description>Stored as base=variant strings so the popup can remember variant choices.</description>
+    </key>
   </schema>
 </schemalist>

@@ -57,8 +57,6 @@ pub struct EmojiEngine {
     pub recent_tick: u64,
     // Settings (trigger character, etc.)
     pub settings: Settings,
-    // Last observed settings file mtime, used for live reloads
-    pub settings_mtime: Option<u64>,
     /// Channel to forward UpdateResults to session bus for UI
     picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
 }
@@ -84,7 +82,6 @@ impl EmojiEngine {
             recents: Vec::new(),
             recent_tick: 0,
             settings: Settings::default(),
-            settings_mtime: None,
             picker_tx: None,
         };
         engine.load_recents();
@@ -109,7 +106,6 @@ impl EmojiEngine {
             recents: Vec::new(),
             recent_tick: 0,
             settings: Settings::default(),
-            settings_mtime: None,
             picker_tx,
         };
         engine.load_recents();
@@ -242,10 +238,7 @@ impl EmojiEngine {
     }
 
     pub fn refresh_settings_if_changed(&mut self) {
-        let current = self.settings_file_mtime();
-        if self.settings_mtime != current {
-            self.load_settings();
-        }
+        self.load_settings();
     }
 }
 
