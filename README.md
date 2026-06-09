@@ -62,7 +62,7 @@ ibus restart
 - Search is prefix-based and case-insensitive.
 - The popup UI is launched by the engine and talks back over the session bus.
 - Click-to-commit requests carry a per-launch token to avoid accidental cross-instance commits.
-- Preferences currently persist to local JSON files under `~/.config/gnome-emoji-input/` and `~/.cache/gnome-emoji-input/`; the GSettings schema is present for packaging, but the prefs app has not been switched over to it yet.
+- Preferences now use GSettings for trigger and variant preferences, while recents remain in a local cache file under `~/.cache/gnome-emoji-input/`.
 
 ## Debugging
 

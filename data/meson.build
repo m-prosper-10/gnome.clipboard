@@ -21,7 +21,7 @@ if get_option('install_desktop_file')
   )
 endif
 
-# GSettings schema (will be populated in PHASE 6)
+# GSettings schema
 if get_option('install_gschema')
   install_data('org.example.EmojiInput.gschema.xml',
     install_dir: datadir / 'glib-2.0' / 'schemas'

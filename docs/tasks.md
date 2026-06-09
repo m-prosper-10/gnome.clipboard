@@ -158,7 +158,7 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
   - [x] Identify emojis with skin tone modifiers
   - [x] Implement variant selection UI
   - [x] Add variant picker (long-press or submenu)
-  - [ ] Persist variant preferences
+  - [x] Persist variant preferences
 - [x] Cache management
   - [x] Implement cache storage
   - [x] Load cache on startup
@@ -179,26 +179,26 @@ See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/doc
 
 **Goal**: Separation of concerns - dedicated settings UI.
 
-**Current code note**: The prefs app already exists, and the engine now watches the local JSON settings file for changes so trigger updates apply without a restart. The GSettings schema file is present for packaging, but the app is not yet wired to it.
+**Current code note**: The prefs app and engine now use GSettings for trigger and variant preferences, and trigger updates apply without a restart. The remaining work is richer settings coverage and validation.
 
-- [ ] Implement `ui/` GTK preferences app
-  - [ ] Create standalone GTK application
-  - [ ] Design preferences window layout
-  - [ ] Implement settings categories
-- [ ] Create GSettings schema
-  - [ ] Define schema XML
-  - [ ] Compile schema
-  - [ ] Install schema to system
+- [x] Implement `ui/` GTK preferences app
+  - [x] Create standalone GTK application
+  - [x] Design preferences window layout
+  - [x] Implement settings categories
+- [x] Create GSettings schema
+  - [x] Define schema XML
+  - [x] Compile schema
+  - [x] Install schema to system
 - [ ] Expose settings
   - [ ] Trigger sequence configuration
   - [ ] Emoji display size setting
   - [ ] History depth setting
   - [ ] Theme preferences (if applicable)
   - [ ] Keyboard shortcuts configuration
-- [ ] Settings integration
-  - [ ] Bind UI controls to GSettings
-  - [ ] Ensure engine reads settings
-  - [ ] Implement live settings reload
+- [x] Settings integration
+  - [x] Bind UI controls to GSettings
+  - [x] Ensure engine reads settings
+  - [x] Implement live settings reload
   - [ ] Add settings validation
 
 **Deliverables**:
