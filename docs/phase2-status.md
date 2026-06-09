@@ -69,7 +69,6 @@ The engine is ready but needs manual verification:
 ### Not Yet Implemented
 
 - **Manual IBus verification**: The code path is implemented, but the engine still needs to be exercised in a live GNOME/IBus session
-- **GSettings-backed preferences**: The prefs app and engine now read trigger and variant preferences from GSettings
 - **Full packaging polish**: Desktop integration and schema installation are still partial
 
 ## Known Limitations

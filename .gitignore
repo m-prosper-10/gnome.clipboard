@@ -13,7 +13,6 @@ prefs/target/
 prefs/Cargo.lock
 
 # Editor files
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -22,3 +21,9 @@ prefs/Cargo.lock
 # OS files
 .DS_Store
 Thumbs.db
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+config.bat
+node_modules
