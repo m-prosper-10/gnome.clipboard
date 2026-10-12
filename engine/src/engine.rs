@@ -3,7 +3,6 @@ use zvariant::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use log::{error, debug, warn};
 
 pub(crate) mod emoji_db;
 pub(crate) mod search;
@@ -533,7 +532,7 @@ mod tests {
                     char: "👍".to_string(),
                     name: "thumbsup".to_string(),
                     keywords: vec![],
-                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
                 },
             ],
         };
@@ -565,7 +564,7 @@ mod tests {
                     char: "👍".to_string(),
                     name: "thumbsup".to_string(),
                     keywords: vec![],
-                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
                 },
             ],
         };

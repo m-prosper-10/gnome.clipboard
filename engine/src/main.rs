@@ -6,8 +6,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use log::{info, error, debug, warn};
 
-mod engine;
-use engine::{EmojiEngine, Emoji};
+use emoji_input_engine::{EmojiDatabase, EmojiEngine, Emoji};
 
 struct EmojiFactory;
 
@@ -94,7 +93,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     info!("Loading emoji database from: {}", db_file);
-    let database = engine::EmojiDatabase::load_from_source_with_cache(&db_file)
+    let database = EmojiDatabase::load_from_source_with_cache(&db_file)
         .map_err(|e| format!("Failed to load emoji database {}: {}", db_file, e))?;
     info!("Loaded {} emojis.", database.emojis.len());
 
@@ -122,7 +121,6 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or_default(),
         std::process::id()
     );
-    let picker_token_for_bridge = picker_token.clone();
     let picker_token_for_ui = picker_token.clone();
     let picker_service = PickerService {
         commit_tx,
@@ -194,7 +192,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
         while let Some(text) = commit_rx.recv().await {
-            if let Err(e) = proxy.commit_emoji(&text, &picker_token_for_bridge).await {
+            if let Err(e) = proxy.commit_emoji(&text).await {
                 warn!("Bridge: commit_emoji failed: {}", e);
             }
         }
