@@ -2,7 +2,6 @@ use libadwaita as adw;
 use gtk4 as gtk;
 use gio::prelude::*;
 use adw::prelude::*;
-use adw::subclass::prelude::*;
 use gtk::glib;
 use log::info;
 use std::env;
@@ -121,11 +120,11 @@ async fn main() -> glib::ExitCode {
             .text(&settings.trigger_char)
             .build();
         
-        let settings_backend = settings_backend.clone();
+        let settings_backend_for_trigger = settings_backend.clone();
         trigger_row.connect_apply(move |row: &adw::EntryRow| {
-            let mut s = load_settings(settings_backend.as_ref());
+            let mut s = load_settings(settings_backend_for_trigger.as_ref());
             s.trigger_char = row.text().to_string();
-            save_settings(settings_backend.as_ref(), &s);
+            save_settings(settings_backend_for_trigger.as_ref(), &s);
         });
         general_group.add(&trigger_row);
 
@@ -166,7 +165,7 @@ async fn main() -> glib::ExitCode {
         clear_variants_button.connect_clicked(move |_| {
             if let Some(settings) = settings_backend.as_ref() {
                 let empty: [&str; 0] = [];
-                let _ = settings.set_strv(VARIANT_PREFS_KEY, &empty);
+                let _ = settings.set_strv(VARIANT_PREFS_KEY, empty);
             }
         });
         variants_group.add(&clear_variants_button);

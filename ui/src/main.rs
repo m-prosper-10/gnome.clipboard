@@ -1,7 +1,6 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
 use zbus::proxy;
-use gio::prelude::*;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
 use std::cell::RefCell;
@@ -60,7 +59,7 @@ fn save_variant_preferences(settings: Option<&gio::Settings>, prefs: &HashMap<St
         .map(|(base, variant)| format!("{}={}", base, variant))
         .collect();
     let refs: Vec<&str> = values.iter().map(|value| value.as_str()).collect();
-    let _ = settings.set_strv(VARIANT_PREFS_KEY, &refs);
+    let _ = settings.set_strv(VARIANT_PREFS_KEY, refs);
 }
 
 fn build_row(
@@ -418,11 +417,12 @@ async fn main() -> glib::ExitCode {
         let window_for_activate = window.clone();
         let commit_tx_for_render = commit_tx.clone();
 
+        let commit_tx_for_activate = commit_tx.clone();
         list_box.connect_row_activated(move |_, row| {
             let index = row.index();
             let results = results_store_for_activate.borrow();
             if let Some(emoji) = results.get(index as usize) {
-                let _ = commit_tx.try_send(emoji.char.clone());
+                let _ = commit_tx_for_activate.try_send(emoji.char.clone());
                 window_for_activate.hide();
             }
         });
