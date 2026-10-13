@@ -335,18 +335,10 @@ async fn main() -> glib::ExitCode {
             .default_width(360)
             .default_height(320)
             .decorated(false)
+            .focusable(false)
             .hide_on_close(true)
             .resizable(false)
             .build();
-        window.connect_close_request(|window| {
-            window.hide();
-            glib::Propagation::Stop
-        });
-        window.connect_is_active_notify(|window| {
-            if !window.is_active() {
-                window.hide();
-            }
-        });
         anchor_popup_window(&window);
 
         let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
@@ -417,6 +409,13 @@ async fn main() -> glib::ExitCode {
         let window_for_activate = window.clone();
         let commit_tx_for_render = commit_tx.clone();
 
+        let commit_tx_for_close = commit_tx.clone();
+        window.connect_close_request(move |window| {
+            let _ = commit_tx_for_close.try_send(String::new());
+            window.hide();
+            glib::Propagation::Stop
+        });
+
         let commit_tx_for_activate = commit_tx.clone();
         list_box.connect_row_activated(move |_, row| {
             let index = row.index();
@@ -435,6 +434,7 @@ async fn main() -> glib::ExitCode {
         key_controller.connect_key_pressed(move |_, keyval, _, _| {
             match keyval {
                 gtk::gdk::Key::Escape => {
+                    let _ = commit_tx_for_keys.try_send(String::new());
                     window_for_keys.hide();
                     glib::Propagation::Stop
                 }
@@ -555,8 +555,7 @@ async fn main() -> glib::ExitCode {
                                             variant_prefs.clone(),
                                         );
                                         anchor_popup_window(&window);
-                                        window.present();
-                                        list_box.grab_focus();
+                                        window.set_visible(true);
                                     }
                                     glib::ControlFlow::Break
                                 });

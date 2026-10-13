@@ -250,18 +250,25 @@ impl EmojiEngine {
         keycode: u32,
         state: u32,
     ) -> fdo::Result<bool> {
-        self.refresh_settings_if_changed();
+        if !self.enabled {
+            return Ok(false);
+        }
 
         // state & (1 << 30) is key release in IBus
         if (state & (1 << 30)) != 0 {
             return Ok(false);
         }
 
+        if self.buffer.is_empty() {
+            self.refresh_settings_if_changed();
+        }
+
         let (handled, commit) = self.internal_process_key_event(keyval, keycode, state);
         
         // Update preedit text always if we are in composition
         let visible = !self.buffer.is_empty();
-        let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
+        let cursor_pos = self.buffer.chars().count() as u32;
+        let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), cursor_pos, visible).await;
 
         let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
 
@@ -339,17 +346,28 @@ impl EmojiEngine {
     async fn update_results_signal(se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
 }
 
+fn make_ibus_text(text: String) -> Value<'static> {
+    let attrs_tuple = (
+        "IBusAttrList",
+        HashMap::<String, Value>::new(),
+        Vec::<Value>::new(),
+    );
+    let ibus_text_tuple = (
+        "IBusText",
+        HashMap::<String, Value>::new(),
+        text,
+        Value::from(attrs_tuple),
+    );
+    Value::from(ibus_text_tuple)
+}
+
 impl EmojiEngine {
     async fn emit_commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
-        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
-        let variant = Value::from(ibus_text);
-        Self::commit_text_signal(se, variant.into()).await
+        Self::commit_text_signal(se, make_ibus_text(text)).await
     }
 
     async fn emit_update_preedit_text(&self, se: &SignalEmitter<'_>, text: String, cursor_pos: u32, visible: bool) -> zbus::Result<()> {
-        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
-        let variant = Value::from(ibus_text);
-        Self::update_preedit_text_signal(se, variant.into(), cursor_pos, visible).await
+        Self::update_preedit_text_signal(se, make_ibus_text(text), cursor_pos, visible).await
     }
 
     async fn emit_update_results(&self, se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()> {
