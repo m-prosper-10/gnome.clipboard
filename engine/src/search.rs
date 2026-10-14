@@ -40,17 +40,20 @@ pub fn sort_by_recents(results: &mut [Emoji], recents: &[RecentEmoji]) {
 
 pub fn search(database: &EmojiDatabase, query: &str, recents: &[RecentEmoji]) -> Vec<Emoji> {
     let normalized_query = normalize_query(query);
-    if normalized_query.is_empty() {
-        return Vec::new();
-    }
-
-    let mut results = Vec::new();
-    for emoji in &database.emojis {
-        if matches_query(emoji, &normalized_query) {
-            results.push(emoji.clone());
-        }
-    }
+    let mut results = if normalized_query.is_empty() {
+        database.emojis.clone()
+    } else {
+        database
+            .emojis
+            .iter()
+            .filter(|emoji| matches_query(emoji, &normalized_query))
+            .cloned()
+            .collect()
+    };
 
     sort_by_recents(&mut results, recents);
+    if normalized_query.is_empty() {
+        results.truncate(10);
+    }
     results
 }
