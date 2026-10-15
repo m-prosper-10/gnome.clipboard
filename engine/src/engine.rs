@@ -171,7 +171,7 @@ impl EmojiEngine {
                     (false, None)
                 }
             }
-            0xff0d => { // Enter
+            0xff0d | 0xff8d => { // Enter / KP_Enter
                 if self.buffer == ":emoji:" {
                     self.record_usage("🙂".to_string());
                     self.internal_reset();
@@ -320,14 +320,18 @@ impl EmojiEngine {
         #[zbus(signal_emitter)] se: SignalEmitter<'_>,
         text: String,
     ) -> fdo::Result<()> {
-        if !text.is_empty() {
-            self.record_usage(text.clone());
-            let _ = self.emit_commit_text(&se, text).await;
-        }
         self.internal_reset();
-        // Notify UI to hide popup
+        // Notify UI to hide popup first so focus returns to the target application
         if let Some(ref tx) = self.picker_tx {
             let _ = tx.try_send((Vec::new(), 0));
+        }
+        let _ = self.emit_update_preedit_text(&se, String::new(), 0, false).await;
+
+        if !text.is_empty() {
+            // Brief yield so the window manager returns focus to the target app before CommitText
+            tokio::time::sleep(std::time::Duration::from_millis(60)).await;
+            self.record_usage(text.clone());
+            let _ = self.emit_commit_text(&se, text).await;
         }
         Ok(())
     }

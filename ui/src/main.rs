@@ -75,25 +75,26 @@ fn build_row(
         .build();
     row.add_css_class("emoji-row");
 
-    let outer = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-    outer.set_margin_top(8);
-    outer.set_margin_bottom(8);
-    outer.set_margin_start(10);
-    outer.set_margin_end(10);
+    let outer = gtk::Box::new(gtk::Orientation::Horizontal, 10);
+    outer.set_margin_top(5);
+    outer.set_margin_bottom(5);
+    outer.set_margin_start(8);
+    outer.set_margin_end(8);
 
     let glyph = gtk::Label::new(Some(&emoji.char));
-    glyph.add_css_class("title-1");
+    glyph.add_css_class("emoji-glyph");
     glyph.set_width_chars(2);
-    glyph.set_xalign(0.0);
+    glyph.set_xalign(0.5);
     glyph.set_valign(gtk::Align::Center);
 
-    let text_box = gtk::Box::new(gtk::Orientation::Vertical, 2);
+    let text_box = gtk::Box::new(gtk::Orientation::Vertical, 1);
     text_box.set_hexpand(true);
+    text_box.set_valign(gtk::Align::Center);
 
     let name = gtk::Label::new(Some(&format!(":{}", emoji.name)));
     name.set_xalign(0.0);
     name.set_halign(gtk::Align::Start);
-    name.add_css_class("title-4");
+    name.add_css_class("emoji-name");
 
     let keywords_text = if emoji.keywords.is_empty() {
         String::from(" ")
@@ -103,6 +104,7 @@ fn build_row(
     let keywords = gtk::Label::new(Some(&keywords_text));
     keywords.set_xalign(0.0);
     keywords.set_halign(gtk::Align::Start);
+    keywords.set_ellipsize(gtk::pango::EllipsizeMode::End);
     keywords.add_css_class("caption");
 
     text_box.append(&name);
@@ -308,16 +310,35 @@ async fn main() -> glib::ExitCode {
         css.load_from_data(
             "
             window {
-                border-radius: 16px;
+                border-radius: 12px;
+                border: 1px solid alpha(@borders, 0.8);
+                background: @window_bg_color;
+            }
+            .picker-root {
+                padding: 6px;
             }
             .emoji-row {
-                border-radius: 12px;
+                border-radius: 8px;
+                margin: 1px 0;
             }
             .emoji-row:selected {
-                background: alpha(@accent_bg_color, 0.18);
+                background: alpha(@accent_bg_color, 0.22);
+            }
+            .emoji-glyph {
+                font-size: 20px;
+            }
+            .emoji-name {
+                font-weight: 600;
+                font-size: 13px;
             }
             .caption {
-                opacity: 0.72;
+                opacity: 0.68;
+                font-size: 11px;
+            }
+            .picker-footer {
+                opacity: 0.65;
+                font-size: 11px;
+                padding: 4px 8px 2px 8px;
             }
             "
         );
@@ -332,8 +353,7 @@ async fn main() -> glib::ExitCode {
         let window = gtk::Window::builder()
             .application(app)
             .title("Emoji Picker")
-            .default_width(360)
-            .default_height(320)
+            .default_width(320)
             .decorated(false)
             .focusable(false)
             .hide_on_close(true)
@@ -341,49 +361,28 @@ async fn main() -> glib::ExitCode {
             .build();
         anchor_popup_window(&window);
 
-        let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
-        root.add_css_class("boxed-list");
-
-        let header = gtk::Box::new(gtk::Orientation::Vertical, 2);
-        header.set_margin_top(12);
-        header.set_margin_bottom(4);
-        header.set_margin_start(14);
-        header.set_margin_end(14);
-
-        let title = gtk::Label::new(Some("Emoji Picker"));
-        title.set_xalign(0.0);
-        title.add_css_class("title-4");
-
-        let subtitle = gtk::Label::new(Some("Enter to commit, Esc to close"));
-        subtitle.set_xalign(0.0);
-        subtitle.add_css_class("caption");
-
-        header.append(&title);
-        header.append(&subtitle);
+        let root = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        root.add_css_class("picker-root");
 
         let scroller = gtk::ScrolledWindow::builder()
             .hscrollbar_policy(gtk::PolicyType::Never)
             .vscrollbar_policy(gtk::PolicyType::Automatic)
-            .min_content_height(220)
+            .propagate_natural_height(true)
+            .max_content_height(280)
             .build();
 
         let list_box = gtk::ListBox::builder().build();
         list_box.add_css_class("navigation-sidebar");
         list_box.set_selection_mode(gtk::SelectionMode::Single);
-        list_box.set_can_focus(true);
-        list_box.set_focus_on_click(true);
+        list_box.set_can_focus(false);
+        list_box.set_focus_on_click(false);
         list_box.set_activate_on_single_click(true);
         scroller.set_child(Some(&list_box));
 
-        let footer = gtk::Label::new(Some("Select with mouse or arrow keys"));
-        footer.set_margin_top(4);
-        footer.set_margin_bottom(10);
-        footer.set_margin_start(14);
-        footer.set_margin_end(14);
+        let footer = gtk::Label::new(Some("↑↓ Navigate  ·  ↵ Insert  ·  Esc Close"));
+        footer.add_css_class("picker-footer");
         footer.set_xalign(0.0);
-        footer.add_css_class("caption");
 
-        root.append(&header);
         root.append(&scroller);
         root.append(&footer);
         window.set_child(Some(&root));
@@ -421,8 +420,8 @@ async fn main() -> glib::ExitCode {
             let index = row.index();
             let results = results_store_for_activate.borrow();
             if let Some(emoji) = results.get(index as usize) {
-                let _ = commit_tx_for_activate.try_send(emoji.char.clone());
                 window_for_activate.hide();
+                let _ = commit_tx_for_activate.try_send(emoji.char.clone());
             }
         });
 
