@@ -6,7 +6,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use log::{info, error, debug, warn};
 
-use emoji_input_engine::{EmojiDatabase, EmojiEngine, Emoji};
+use emoji_input_engine::{EmojiDatabase, EmojiEngine, PickerPayload};
 
 struct EmojiFactory;
 
@@ -108,7 +108,7 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Invalid IBus address '{}': {}", addr_str, e))?;
 
     // Session bus channel for UI popup (IBus daemon bus is not visible to GTK app)
-    let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<(Vec<Emoji>, u32)>(32);
+    let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<PickerPayload>(32);
     let picker_tx = Arc::new(picker_tx);
 
     // Channel for UI click-to-commit (session bus -> engine)
@@ -136,8 +136,13 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to create signal emitter");
 
     let picker_task = tokio::spawn(async move {
-        while let Some((results, selected_index)) = picker_rx.recv().await {
-            let body = (results, selected_index);
+        while let Some(payload) = picker_rx.recv().await {
+            let body = (
+                payload.results,
+                payload.recents,
+                payload.selected_index,
+                payload.query,
+            );
             if let Err(e) = session_emitter
                 .emit("org.example.EmojiInput.Picker", "UpdateResults", &body)
                 .await
