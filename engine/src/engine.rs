@@ -14,6 +14,8 @@ pub struct Emoji {
     pub keywords: Vec<String>,
     #[serde(default)]
     pub variants: Vec<String>,
+    #[serde(default)]
+    pub category: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -42,6 +44,14 @@ impl Default for Settings {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
+pub struct PickerPayload {
+    pub results: Vec<Emoji>,
+    pub recents: Vec<Emoji>,
+    pub selected_index: u32,
+    pub query: String,
+}
+
 pub struct EmojiEngine {
     // Composition buffer - what the user is currently typing
     pub buffer: String,
@@ -57,7 +67,7 @@ pub struct EmojiEngine {
     // Settings (trigger character, etc.)
     pub settings: Settings,
     /// Channel to forward UpdateResults to session bus for UI
-    picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
+    picker_tx: Option<Arc<tokio::sync::mpsc::Sender<PickerPayload>>>,
 }
 
 impl EmojiEngine {
@@ -95,7 +105,7 @@ impl EmojiEngine {
 
     pub fn with_database_and_picker(
         database: EmojiDatabase,
-        picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
+        picker_tx: Option<Arc<tokio::sync::mpsc::Sender<PickerPayload>>>,
     ) -> Self {
         let mut engine = EmojiEngine {
             buffer: String::new(),
@@ -190,7 +200,7 @@ impl EmojiEngine {
                 }
                 (false, None)
             }
-            0xff52 => { // Arrow Up
+            0xff51 => { // Arrow Left
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
@@ -201,12 +211,36 @@ impl EmojiEngine {
                 }
                 (false, None)
             }
-            0xff54 => { // Arrow Down
+            0xff53 => { // Arrow Right
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
                     if count > 0 {
                         self.selected_index = (self.selected_index + 1) % count;
+                        return (true, None);
+                    }
+                }
+                (false, None)
+            }
+            0xff52 => { // Arrow Up (step by grid row width 7)
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        let step = 7.min(count);
+                        self.selected_index = (self.selected_index + count - step) % count;
+                        return (true, None);
+                    }
+                }
+                (false, None)
+            }
+            0xff54 => { // Arrow Down (step by grid row width 7)
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        let step = 7.min(count);
+                        self.selected_index = (self.selected_index + step) % count;
                         return (true, None);
                     }
                 }
@@ -273,23 +307,29 @@ impl EmojiEngine {
         let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
 
         // Emit search results if in composition (or empty to hide popup)
-        let (emojis, selected) = if visible && self.buffer.starts_with(trigger) {
+        let (emojis, recents_list, selected, query_str) = if visible && self.buffer.starts_with(trigger) {
             let query = self.buffer.trim_start_matches(trigger);
             let emojis = self.database.search(query, &self.recents);
+            let recents_list = search::recent_emojis(&self.database, &self.recents);
             let count = emojis.len();
             if self.selected_index >= count && count > 0 {
                 self.selected_index = 0;
             }
-            (emojis, self.selected_index as u32)
+            (emojis, recents_list, self.selected_index as u32, query.to_string())
         } else {
-            (Vec::new(), 0)
+            (Vec::new(), Vec::new(), 0, String::new())
         };
         if visible && self.buffer.starts_with(trigger) {
             let _ = self.emit_update_results(&se, emojis.clone(), selected).await;
         }
         // Forward to session bus for UI popup (IBus bus may not be visible to UI)
         if let Some(ref tx) = self.picker_tx {
-            let _ = tx.try_send((emojis, selected));
+            let _ = tx.try_send(PickerPayload {
+                results: emojis,
+                recents: recents_list,
+                selected_index: selected,
+                query: query_str,
+            });
         }
 
         if let Some(text) = commit {
@@ -323,7 +363,12 @@ impl EmojiEngine {
         self.internal_reset();
         // Notify UI to hide popup first so focus returns to the target application
         if let Some(ref tx) = self.picker_tx {
-            let _ = tx.try_send((Vec::new(), 0));
+            let _ = tx.try_send(PickerPayload {
+                results: Vec::new(),
+                recents: Vec::new(),
+                selected_index: 0,
+                query: String::new(),
+            });
         }
         let _ = self.emit_update_preedit_text(&se, String::new(), 0, false).await;
 
@@ -401,8 +446,8 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![], variants: vec![], category: String::new() },
             ],
         };
         let mut engine = EmojiEngine::with_database(db);
@@ -453,8 +498,8 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()], variants: vec![], category: String::new() },
             ],
         };
         
@@ -482,7 +527,8 @@ mod tests {
                     char: "👍".to_string(), 
                     name: "thumbsup".to_string(), 
                     keywords: vec![], 
-                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()] 
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                    category: String::new(),
                 },
             ],
         };
@@ -498,9 +544,9 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile1".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😊".to_string(), name: "smile2".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😄".to_string(), name: "smile3".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile1".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😊".to_string(), name: "smile2".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😄".to_string(), name: "smile3".to_string(), keywords: vec![], variants: vec![], category: String::new() },
             ],
         };
 
@@ -555,6 +601,7 @@ mod tests {
                     name: "thumbsup".to_string(),
                     keywords: vec![],
                     variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
+                    category: String::new(),
                 },
             ],
         };
@@ -587,6 +634,7 @@ mod tests {
                     name: "thumbsup".to_string(),
                     keywords: vec![],
                     variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
+                    category: String::new(),
                 },
             ],
         };
