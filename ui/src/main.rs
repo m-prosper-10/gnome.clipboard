@@ -257,7 +257,7 @@ fn refresh_picker_view(
 
     if show_recents_strip {
         recents_section.set_visible(true);
-        let top_recents: Vec<Emoji> = state.recents.iter().take(7).cloned().collect();
+        let top_recents: Vec<Emoji> = state.recents.iter().take(6).cloned().collect();
         populate_grid(
             recents_flow,
             &top_recents,
@@ -366,56 +366,62 @@ async fn main() -> glib::ExitCode {
         css.load_from_data(
             "
             window {
-                border-radius: 12px;
-                border: 1px solid alpha(@borders, 0.85);
-                background: @window_bg_color;
-                box-shadow: 0 8px 24px alpha(black, 0.25);
+                background-color: transparent;
             }
             .picker-root {
-                padding: 8px;
+                padding: 6px;
+                border-radius: 12px;
+                border: 1px solid alpha(@borders, 0.65);
+                background-color: alpha(@window_bg_color, 0.86);
+                box-shadow: 0 6px 20px alpha(black, 0.25);
             }
             .cat-tab {
-                min-width: 28px;
-                min-height: 28px;
-                padding: 2px 6px;
-                border-radius: 8px;
-                font-size: 14px;
+                min-width: 24px;
+                min-height: 24px;
+                padding: 1px 4px;
+                border-radius: 6px;
+                font-size: 13px;
             }
             .cat-tab.active-cat {
-                background: alpha(@accent_bg_color, 0.22);
-                border: 1px solid alpha(@accent_bg_color, 0.5);
+                background: alpha(@accent_bg_color, 0.24);
+                border: 1px solid alpha(@accent_bg_color, 0.55);
+            }
+            .picker-search {
+                min-height: 28px;
+                font-size: 12px;
+                background-color: alpha(@view_bg_color, 0.72);
             }
             .emoji-tile-child {
                 padding: 0;
-                border-radius: 8px;
+                border-radius: 6px;
             }
             .emoji-tile-child:selected {
-                background: alpha(@accent_bg_color, 0.28);
-                outline: 1px solid alpha(@accent_bg_color, 0.7);
+                background: alpha(@accent_bg_color, 0.30);
+                outline: 1px solid alpha(@accent_bg_color, 0.75);
             }
             .emoji-tile {
-                min-width: 38px;
-                min-height: 38px;
+                min-width: 34px;
+                min-height: 34px;
                 padding: 0;
-                border-radius: 8px;
-                font-size: 21px;
+                border-radius: 6px;
+                font-size: 18px;
             }
             .emoji-tile:hover {
-                background: alpha(@view_fg_color, 0.08);
+                background: alpha(@view_fg_color, 0.10);
             }
             .has-variants {
                 border-bottom: 2px solid alpha(@accent_bg_color, 0.45);
             }
             .section-title {
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 600;
-                opacity: 0.7;
-                margin-left: 4px;
+                opacity: 0.72;
+                margin-left: 2px;
             }
             .picker-footer {
                 opacity: 0.6;
-                font-size: 10px;
-                padding: 2px 4px 0 4px;
+                font-size: 9px;
+                padding: 1px 2px 0 2px;
             }
             ",
         );
@@ -430,14 +436,14 @@ async fn main() -> glib::ExitCode {
         let window = gtk::Window::builder()
             .application(app)
             .title("Emoji Picker")
-            .default_width(348)
+            .default_width(276)
             .decorated(false)
             .focusable(false)
             .hide_on_close(true)
             .resizable(false)
             .build();
 
-        let root = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        let root = gtk::Box::new(gtk::Orientation::Vertical, 4);
         root.add_css_class("picker-root");
 
         // Top bar: category tabs + close button
@@ -469,19 +475,69 @@ async fn main() -> glib::ExitCode {
 
         // Search bar
         let search_entry = gtk::SearchEntry::builder()
-            .placeholder_text("Search emojis (or keep typing after :)")
+            .placeholder_text("Search emojis…")
             .build();
+        search_entry.add_css_class("picker-search");
         search_entry.set_focus_on_click(true);
 
+        // Allow clicking the search bar to focus it so users can search directly in the popup
+        let search_click = gtk::GestureClick::new();
+        let window_for_search_click = window.clone();
+        let search_entry_for_click = search_entry.clone();
+        search_click.connect_pressed(move |_, _, _, _| {
+            window_for_search_click.set_focusable(true);
+            window_for_search_click.present();
+            search_entry_for_click.grab_focus();
+        });
+        search_entry.add_controller(search_click);
+
+        // Handle Enter/Esc when typing directly inside the search bar
+        let search_keys = gtk::EventControllerKey::new();
+        let state_for_search_keys = state.clone();
+        let commit_tx_for_search_keys = commit_tx.clone();
+        let window_for_search_keys = window.clone();
+        let variant_prefs_for_search_keys = variant_prefs.clone();
+        search_keys.connect_key_pressed(move |_, keyval, _, _| match keyval {
+            gtk::gdk::Key::Escape => {
+                window_for_search_keys.hide();
+                window_for_search_keys.set_focusable(false);
+                let _ = commit_tx_for_search_keys.try_send(String::new());
+                glib::Propagation::Stop
+            }
+            gtk::gdk::Key::Return | gtk::gdk::Key::KP_Enter => {
+                let st = state_for_search_keys.borrow();
+                let first_match = if !st.local_query.is_empty() {
+                    st.results
+                        .iter()
+                        .find(|e| matches_local_query(e, &st.local_query))
+                } else {
+                    st.results.get(st.selected_index.max(0) as usize)
+                };
+                if let Some(emoji) = first_match {
+                    let chosen = variant_prefs_for_search_keys
+                        .borrow()
+                        .get(&emoji.char)
+                        .cloned()
+                        .unwrap_or_else(|| emoji.char.clone());
+                    window_for_search_keys.hide();
+                    window_for_search_keys.set_focusable(false);
+                    let _ = commit_tx_for_search_keys.try_send(chosen);
+                }
+                glib::Propagation::Stop
+            }
+            _ => glib::Propagation::Proceed,
+        });
+        search_entry.add_controller(search_keys);
+
         // Recents section
-        let recents_section = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        let recents_section = gtk::Box::new(gtk::Orientation::Vertical, 2);
         let recents_label = gtk::Label::new(Some("Recently Used"));
         recents_label.set_xalign(0.0);
         recents_label.add_css_class("section-title");
 
         let recents_flow = gtk::FlowBox::builder()
-            .max_children_per_line(7)
-            .min_children_per_line(7)
+            .max_children_per_line(6)
+            .min_children_per_line(6)
             .selection_mode(gtk::SelectionMode::None)
             .homogeneous(true)
             .row_spacing(2)
@@ -496,8 +552,8 @@ async fn main() -> glib::ExitCode {
         main_label.add_css_class("section-title");
 
         let main_flow = gtk::FlowBox::builder()
-            .max_children_per_line(7)
-            .min_children_per_line(7)
+            .max_children_per_line(6)
+            .min_children_per_line(6)
             .selection_mode(gtk::SelectionMode::Single)
             .homogeneous(true)
             .row_spacing(2)
@@ -507,11 +563,11 @@ async fn main() -> glib::ExitCode {
 
         let empty_label = gtk::Label::new(Some("No matching emojis"));
         empty_label.add_css_class("section-title");
-        empty_label.set_margin_top(16);
-        empty_label.set_margin_bottom(16);
+        empty_label.set_margin_top(12);
+        empty_label.set_margin_bottom(12);
         empty_label.set_visible(false);
 
-        let grid_container = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        let grid_container = gtk::Box::new(gtk::Orientation::Vertical, 4);
         grid_container.append(&recents_section);
         grid_container.append(&main_label);
         grid_container.append(&main_flow);
@@ -521,11 +577,11 @@ async fn main() -> glib::ExitCode {
             .hscrollbar_policy(gtk::PolicyType::Never)
             .vscrollbar_policy(gtk::PolicyType::Automatic)
             .propagate_natural_height(true)
-            .max_content_height(260)
+            .max_content_height(185)
             .build();
         scroller.set_child(Some(&grid_container));
 
-        let footer = gtk::Label::new(Some("↑↓←→ Navigate  ·  ↵ Insert  ·  Right-click variants  ·  Esc Close"));
+        let footer = gtk::Label::new(Some("↑↓←→ Navigate · ↵ Insert · Right-click variants · Esc Close"));
         footer.add_css_class("picker-footer");
         footer.set_xalign(0.0);
 
@@ -747,6 +803,7 @@ async fn main() -> glib::ExitCode {
                                     let is_closing = results.is_empty() && query.is_empty();
                                     if is_closing {
                                         window.hide();
+                                        window.set_focusable(false);
                                         let mut st = state.borrow_mut();
                                         st.local_query.clear();
                                         st.engine_query.clear();

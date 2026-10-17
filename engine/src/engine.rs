@@ -222,28 +222,32 @@ impl EmojiEngine {
                 }
                 (false, None)
             }
-            0xff52 => { // Arrow Up (step by grid row width 7)
+            0xff52 => { // Arrow Up (step by grid row width 6)
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
                     if count > 0 {
-                        let step = 7.min(count);
+                        let step = 6.min(count);
                         self.selected_index = (self.selected_index + count - step) % count;
                         return (true, None);
                     }
                 }
                 (false, None)
             }
-            0xff54 => { // Arrow Down (step by grid row width 7)
+            0xff54 => { // Arrow Down (step by grid row width 6)
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
                     if count > 0 {
-                        let step = 7.min(count);
+                        let step = 6.min(count);
                         self.selected_index = (self.selected_index + step) % count;
                         return (true, None);
                     }
                 }
+                (false, None)
+            }
+            0xffe1..=0xffee | 0xfe01..=0xfe0f => {
+                // Modifier / level-shift keys (Shift, Ctrl, Alt, Super, etc.) should not cancel composition
                 (false, None)
             }
             _ => {
