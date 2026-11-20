@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build Release Tarball
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            ninja-build \
+            pkg-config \
+            libglib2.0-dev \
+            libglib2.0-bin \
+            libgtk-4-dev \
+            libadwaita-1-dev \
+            libibus-1.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure and build release
+        run: |
+          meson setup release-build \
+            --buildtype=release \
+            --prefix=/usr \
+            -Dinstall_ibus_component=true \
+            -Dinstall_desktop_file=true \
+            -Dinstall_gschema=true
+          DESTDIR="$PWD/dist" ninja -C release-build install
+
+      - name: Create release archive
+        run: |
+          VERSION="${GITHUB_REF_NAME:-snapshot}"
+          ARCHIVE="gnome-emoji-input-${VERSION}-x86_64-linux.tar.gz"
+          tar -C dist -czf "$ARCHIVE" .
+          sha256sum "$ARCHIVE" > "${ARCHIVE}.sha256"
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-archive
+          path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
