@@ -78,7 +78,7 @@ if ibus list-engine | grep -q "emoji-input"; then
     echo "5. Add it to your input methods"
     echo "6. Switch to it using Super+Space (or your configured shortcut)"
     echo ""
-    echo "Note: PHASE 2 engine is minimal - it just runs but doesn't process keys yet"
+    echo "Note: PHASE 2 engine now handles trigger/search/commit behavior; manual verification is still required"
 else
     echo "❌ Engine not found in IBus list"
     echo ""

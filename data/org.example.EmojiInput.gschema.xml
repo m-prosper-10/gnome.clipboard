@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schemalist>
+  <schema id="org.example.EmojiInput" path="/org/example/EmojiInput/">
+    <key name="trigger-char" type="s">
+      <default>':'</default>
+      <summary>Trigger character</summary>
+      <description>Character that opens emoji composition when typed in the input method.</description>
+    </key>
+    <key name="variant-preferences" type="as">
+      <default>[]</default>
+      <summary>Preferred emoji variants</summary>
+      <description>Stored as base=variant strings so the popup can remember variant choices.</description>
+    </key>
+  </schema>
+</schemalist>

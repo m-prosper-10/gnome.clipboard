@@ -12,6 +12,6 @@ option('install_desktop_file',
 
 option('install_gschema',
   type: 'boolean',
-  value: false,
+  value: true,
   description: 'Install GSettings schema (enable in PHASE 6)'
 )

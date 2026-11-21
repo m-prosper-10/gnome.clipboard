@@ -6,19 +6,24 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use log::{info, error, debug, warn};
 
-mod engine;
-use engine::{EmojiEngine, Emoji};
+use emoji_input_engine::{EmojiDatabase, EmojiEngine, PickerPayload};
 
 struct EmojiFactory;
 
 /// Session bus service for UI - forwards CommitEmoji to engine via channel
 struct PickerService {
     commit_tx: tokio::sync::mpsc::Sender<String>,
+    picker_token: String,
 }
 
 #[interface(name = "org.example.EmojiInput.Picker")]
 impl PickerService {
-    async fn commit_emoji(&self, text: String) -> fdo::Result<()> {
+    async fn commit_emoji(&self, text: String, token: String) -> fdo::Result<()> {
+        if token != self.picker_token {
+            warn!("Rejecting commit_emoji with invalid instance token");
+            return Ok(());
+        }
+
         let _ = self.commit_tx.send(text).await;
         Ok(())
     }
@@ -59,7 +64,7 @@ async fn main() -> ExitCode {
         }
     } else {
         println!("emoji-input-engine v{}", env!("CARGO_PKG_VERSION"));
-        println!("PHASE 8: Hardening");
+        println!("PHASE 2: Minimal IBus Engine");
         println!();
         println!("To use as IBus engine:");
         println!("  1. Copy ibus-component.xml to ~/.local/share/ibus/component/");
@@ -88,10 +93,8 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     info!("Loading emoji database from: {}", db_file);
-    let db_content = std::fs::read_to_string(&db_file)
-        .map_err(|e| format!("Failed to read emoji database {}: {}", db_file, e))?;
-    let database: engine::EmojiDatabase = serde_json::from_str(&db_content)
-        .map_err(|e| format!("Failed to parse emoji database: {}", e))?;
+    let database = EmojiDatabase::load_from_source_with_cache(&db_file)
+        .map_err(|e| format!("Failed to load emoji database {}: {}", db_file, e))?;
     info!("Loaded {} emojis.", database.emojis.len());
 
     let addr_str = env::var("IBUS_ADDRESS")
@@ -105,12 +108,24 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Invalid IBus address '{}': {}", addr_str, e))?;
 
     // Session bus channel for UI popup (IBus daemon bus is not visible to GTK app)
-    let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<(Vec<Emoji>, u32)>(32);
+    let (picker_tx, mut picker_rx) = tokio::sync::mpsc::channel::<PickerPayload>(32);
     let picker_tx = Arc::new(picker_tx);
 
     // Channel for UI click-to-commit (session bus -> engine)
     let (commit_tx, mut commit_rx) = tokio::sync::mpsc::channel::<String>(16);
-    let picker_service = PickerService { commit_tx };
+    let picker_token = format!(
+        "{:x}-{:x}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or_default(),
+        std::process::id()
+    );
+    let picker_token_for_ui = picker_token.clone();
+    let picker_service = PickerService {
+        commit_tx,
+        picker_token: picker_token.clone(),
+    };
 
     let session_conn = zbus::connection::Builder::session()?
         .name("org.example.EmojiInput.Picker")?
@@ -121,8 +136,13 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed to create signal emitter");
 
     let picker_task = tokio::spawn(async move {
-        while let Some((results, selected_index)) = picker_rx.recv().await {
-            let body = (results, selected_index);
+        while let Some(payload) = picker_rx.recv().await {
+            let body = (
+                payload.results,
+                payload.recents,
+                payload.selected_index,
+                payload.query,
+            );
             if let Err(e) = session_emitter
                 .emit("org.example.EmojiInput.Picker", "UpdateResults", &body)
                 .await
@@ -201,7 +221,10 @@ async fn run_ibus_engine() -> Result<(), Box<dyn std::error::Error>> {
 
     let ui_child = if let Some(path) = ui_path {
         info!("Launching UI from: {:?}", path);
-        match std::process::Command::new(&path).spawn() {
+        match std::process::Command::new(&path)
+            .env("EMOJI_INPUT_PICKER_TOKEN", &picker_token_for_ui)
+            .spawn()
+        {
             Ok(child) => Some(child),
             Err(e) => {
                 error!("Failed to launch UI process at {:?}: {}", path, e);

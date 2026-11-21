@@ -1,14 +1,17 @@
 use libadwaita as adw;
 use gtk4 as gtk;
+use gio::prelude::*;
 use adw::prelude::*;
-use adw::subclass::prelude::*;
 use gtk::glib;
 use log::info;
-use serde::{Deserialize, Serialize};
 use std::env;
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+const SETTINGS_SCHEMA_ID: &str = "org.example.EmojiInput";
+const SETTINGS_TRIGGER_CHAR: &str = "trigger-char";
+const VARIANT_PREFS_KEY: &str = "variant-preferences";
+
+#[derive(Debug, Clone)]
 pub struct Settings {
     pub trigger_char: String,
 }
@@ -21,31 +24,32 @@ impl Default for Settings {
     }
 }
 
-fn get_config_path() -> Option<PathBuf> {
-    let home = env::var("HOME").ok()?;
-    let path = PathBuf::from(home)
-        .join(".config")
-        .join("gnome-emoji-input");
-    let _ = std::fs::create_dir_all(&path);
-    Some(path.join("settings.json"))
+fn gsettings() -> gio::Settings {
+    gio::Settings::new(SETTINGS_SCHEMA_ID)
 }
 
-fn load_settings() -> Settings {
-    if let Some(path) = get_config_path() {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(settings) = serde_json::from_str::<Settings>(&content) {
-                return settings;
-            }
-        }
+fn try_gsettings() -> Option<gio::Settings> {
+    gio::SettingsSchemaSource::default()
+        .and_then(|source| source.lookup(SETTINGS_SCHEMA_ID, true))
+        .map(|_| gsettings())
+}
+
+fn load_settings(settings: Option<&gio::Settings>) -> Settings {
+    let Some(settings) = settings else {
+        return Settings::default();
+    };
+
+    let trigger_char = settings.string(SETTINGS_TRIGGER_CHAR).to_string();
+    if trigger_char.is_empty() {
+        Settings::default()
+    } else {
+        Settings { trigger_char }
     }
-    Settings::default()
 }
 
-fn save_settings(settings: &Settings) {
-    if let Some(path) = get_config_path() {
-        if let Ok(content) = serde_json::to_string_pretty(settings) {
-            let _ = std::fs::write(path, content);
-        }
+fn save_settings(settings: Option<&gio::Settings>, value: &Settings) {
+    if let Some(settings) = settings {
+        let _ = settings.set_string(SETTINGS_TRIGGER_CHAR, &value.trigger_char);
     }
 }
 
@@ -71,7 +75,8 @@ async fn main() -> glib::ExitCode {
         .build();
 
     application.connect_activate(|app| {
-        let settings = load_settings();
+        let settings_backend = try_gsettings();
+        let settings = load_settings(settings_backend.as_ref());
         
         // Window
         let window = adw::ApplicationWindow::builder()
@@ -90,6 +95,20 @@ async fn main() -> glib::ExitCode {
         let page = adw::PreferencesPage::new();
         content.append(&page);
 
+        if settings_backend.is_none() {
+            let status_group = adw::PreferencesGroup::builder()
+                .title("Status")
+                .build();
+            page.add(&status_group);
+
+            let status_label = gtk::Label::new(Some(
+                "GSettings schema is not installed yet. Defaults are shown, but preference changes will not persist.",
+            ));
+            status_label.set_wrap(true);
+            status_label.set_xalign(0.0);
+            status_group.add(&status_label);
+        }
+
         // General Group
         let general_group = adw::PreferencesGroup::builder()
             .title("General")
@@ -101,10 +120,11 @@ async fn main() -> glib::ExitCode {
             .text(&settings.trigger_char)
             .build();
         
+        let settings_backend_for_trigger = settings_backend.clone();
         trigger_row.connect_apply(move |row: &adw::EntryRow| {
-            let mut s = load_settings();
+            let mut s = load_settings(settings_backend_for_trigger.as_ref());
             s.trigger_char = row.text().to_string();
-            save_settings(&s);
+            save_settings(settings_backend_for_trigger.as_ref(), &s);
         });
         general_group.add(&trigger_row);
 
@@ -125,6 +145,30 @@ async fn main() -> glib::ExitCode {
             }
         });
         history_group.add(&clear_button);
+
+        // Variants Group
+        let variants_group = adw::PreferencesGroup::builder()
+            .title("Variants")
+            .build();
+        page.add(&variants_group);
+
+        let variants_label = gtk::Label::new(Some("Variant choices are remembered from the popup."));
+        variants_label.set_wrap(true);
+        variants_label.set_xalign(0.0);
+        variants_group.add(&variants_label);
+
+        let clear_variants_button = gtk::Button::builder()
+            .label("Clear Preferred Variants")
+            .css_classes(["destructive-action"])
+            .build();
+        let settings_backend = settings_backend.clone();
+        clear_variants_button.connect_clicked(move |_| {
+            if let Some(settings) = settings_backend.as_ref() {
+                let empty: [&str; 0] = [];
+                let _ = settings.set_strv(VARIANT_PREFS_KEY, empty);
+            }
+        });
+        variants_group.add(&clear_variants_button);
 
         window.present();
     });

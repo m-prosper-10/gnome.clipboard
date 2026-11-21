@@ -48,7 +48,7 @@
   - [x] Implement engine activation handler (stub)
   - [x] Implement key event handler (stub)
   - [x] Implement `commit_text()` function (stub)
-  - [ ] Add hardcoded test trigger (e.g., `:emoji:` → 🙂)
+  - [x] Add hardcoded test trigger (e.g., `:emoji:` → 🙂)
 - [x] Create `ibus-component.xml`
   - [x] Define engine metadata
   - [x] Register engine with IBus
@@ -64,7 +64,7 @@
 - ⏳ Selecting it allows typing
 - ⏳ Pressing hardcoded key inserts single emoji
 
-**Status**: Engine compiles and runs. Component XML ready. Needs manual IBus testing.
+**Status**: Engine implementation is complete. Component XML ready. Needs manual IBus testing.
 
 ---
 
@@ -72,56 +72,62 @@
 
 **Goal**: Real input method behavior (still headless).
 
-- [ ] Implement composition buffer
-  - [ ] Create composition state management
-  - [ ] Capture typed characters
-  - [ ] Display preedit text
-  - [ ] Implement cancel logic (Esc)
-  - [ ] Implement confirm logic (Enter)
-- [ ] Emoji database system
-  - [ ] Create `data/emojis.json` structure
-  - [ ] Implement JSON loader
-  - [ ] Build in-memory index
-  - [ ] Add keyword-based filtering
-  - [ ] Implement search algorithm
-- [ ] Search integration
-  - [ ] Connect composition buffer to search
-  - [ ] Filter emoji list based on input
-  - [ ] Commit first match on Enter
-  - [ ] Add debug logging for filtering
+**Current code note**: The composition buffer, search/filtering, recents, and commit path already exist in `engine/src/engine.rs`. The remaining phase 3 work is mostly about keeping that logic cleanly separated, validating it in a live IBus session, and tightening edge cases as they show up.
+
+- [x] Implement composition buffer
+  - [x] Create composition state management
+  - [x] Capture typed characters
+  - [x] Display preedit text
+  - [x] Implement cancel logic (Esc)
+  - [x] Implement confirm logic (Enter)
+- [x] Emoji database system
+  - [x] Create `data/emojis.json` structure
+  - [x] Implement JSON loader
+  - [x] Build in-memory index
+  - [x] Add keyword-based filtering
+  - [x] Implement search algorithm
+- [x] Search integration
+  - [x] Connect composition buffer to search
+  - [x] Filter emoji list based on input
+  - [x] Commit first match on Enter
+  - [x] Add debug logging for filtering
 
 **Deliverables**:
 
 - ✅ Typing `:sm` narrows emoji list internally
-- ✅ No UI yet, but logs show correct filtering
+- ✅ Basic popup bridge exists, but the phase remains focused on engine-side behavior
 - ✅ Commit first match on Enter works
 
 ---
 
 ## PHASE 4: Popup GTK UI (Engine-Controlled)
 
-**Goal**: Visual picker - first "feels real" moment.
+**Goal**: Polish the popup GTK UI and harden engine-UI interaction.
 
-- [ ] Create GTK popup window
-  - [ ] Initialize GTK application
-  - [ ] Create popup window widget
-  - [ ] Configure window properties (borderless, floating)
-  - [ ] Implement window positioning (near cursor or centered)
-- [ ] Build UI components
-  - [ ] Add search entry widget
-  - [ ] Create emoji grid/list view
-  - [ ] Implement emoji rendering
-  - [ ] Add visual selection indicator
-- [ ] Keyboard navigation
-  - [ ] Arrow key navigation (up/down/left/right)
-  - [ ] Enter key to commit selection
-  - [ ] Esc key to close popup
-  - [ ] Tab/Shift+Tab navigation
-- [ ] Engine-UI integration
-  - [ ] Connect engine to popup lifecycle
-  - [ ] Pass search results to UI
-  - [ ] Handle selection events
-  - [ ] Clean popup closure
+**Current code note**: The popup now exists as a functional session-bus-driven picker. Phase 4 work is focused on placement, explicit keyboard handling, closure behavior, and interaction polish rather than protocol changes.
+
+See also: [docs/phase4-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase4-plan.md)
+
+- [x] Create GTK popup window
+  - [x] Initialize GTK application
+  - [x] Create popup window widget
+  - [x] Configure window properties (borderless, floating)
+  - [x] Implement window positioning (near cursor or centered)
+- [x] Build UI components
+  - [x] Keep the popup display-only and engine-driven
+  - [x] Create emoji grid/list view
+  - [x] Implement emoji rendering
+  - [x] Add visual selection indicator
+- [x] Keyboard navigation
+  - [x] Arrow key navigation (up/down/left/right)
+  - [x] Enter key to commit selection
+  - [x] Esc key to close popup
+  - [x] Tab/Shift+Tab navigation
+- [x] Engine-UI integration
+  - [x] Connect engine to popup lifecycle
+  - [x] Pass search results to UI
+  - [x] Handle selection events
+  - [x] Clean popup closure
 
 **Deliverables**:
 
@@ -130,28 +136,34 @@
 - ✅ Enter commits selected emoji
 - ✅ Esc closes popup cleanly
 
+**Status**: Popup implementation is complete. Remaining work is live IBus/compositor verification and any polish that shows up during that testing.
+
 ---
 
 ## PHASE 5: Recents + Variants
 
 **Goal**: Usability improvements, not decoration.
 
-- [ ] Recent emojis system
-  - [ ] Design persistence format (GSettings or local file)
-  - [ ] Implement recent emoji tracking
-  - [ ] Sort recents by frequency
-  - [ ] Display recents in UI (separate section or priority)
-  - [ ] Limit recents history size
-- [ ] Emoji variants support
-  - [ ] Identify emojis with skin tone modifiers
-  - [ ] Implement variant selection UI
-  - [ ] Add variant picker (long-press or submenu)
-  - [ ] Persist variant preferences
-- [ ] Cache management
-  - [ ] Implement cache storage
-  - [ ] Load cache on startup
-  - [ ] Save cache on changes
-  - [ ] Handle cache corruption gracefully
+**Current code note**: Recents are now frequency-ranked in the engine, and the popup exposes variants through a per-row chooser. Phase 5 is now about finishing persistence, polish, and any remaining cache/variant edge cases.
+
+See also: [docs/phase5-plan.md](/home/polo/Documents/GNOME%20Input%20Manager/docs/phase5-plan.md)
+
+- [x] Recent emojis system
+  - [x] Design persistence format (mixed: GSettings for prefs, local files for recents/cache)
+  - [x] Implement recent emoji tracking
+  - [x] Sort recents by frequency
+  - [x] Display recents in UI (priority in results)
+  - [x] Limit recents history size
+- [x] Emoji variants support
+  - [x] Identify emojis with skin tone modifiers
+  - [x] Implement variant selection UI
+  - [x] Add variant picker (long-press or submenu)
+  - [x] Persist variant preferences
+- [x] Cache management
+  - [x] Implement cache storage
+  - [x] Load cache on startup
+  - [x] Save cache on changes
+  - [x] Handle cache corruption gracefully
 
 **Deliverables**:
 
@@ -159,30 +171,34 @@
 - ✅ Emoji variants selectable
 - ✅ No crashes after restart
 
+**Status**: Phase 5 is implemented in code. Recents ranking, cache handling, and persisted variant preferences are in place; the remaining work is live verification and any UX cleanup found there.
+
 ---
 
 ## PHASE 6: Preferences App
 
 **Goal**: Separation of concerns - dedicated settings UI.
 
-- [ ] Implement `ui/` GTK preferences app
-  - [ ] Create standalone GTK application
-  - [ ] Design preferences window layout
-  - [ ] Implement settings categories
-- [ ] Create GSettings schema
-  - [ ] Define schema XML
-  - [ ] Compile schema
-  - [ ] Install schema to system
+**Current code note**: The prefs app and engine now use GSettings for trigger and variant preferences, and trigger updates apply without a restart. The remaining work is richer settings coverage and validation.
+
+- [x] Implement `ui/` GTK preferences app
+  - [x] Create standalone GTK application
+  - [x] Design preferences window layout
+  - [x] Implement settings categories
+- [x] Create GSettings schema
+  - [x] Define schema XML
+  - [x] Compile schema
+  - [x] Install schema to system
 - [ ] Expose settings
   - [ ] Trigger sequence configuration
   - [ ] Emoji display size setting
   - [ ] History depth setting
   - [ ] Theme preferences (if applicable)
   - [ ] Keyboard shortcuts configuration
-- [ ] Settings integration
-  - [ ] Bind UI controls to GSettings
-  - [ ] Ensure engine reads settings
-  - [ ] Implement live settings reload
+- [x] Settings integration
+  - [x] Bind UI controls to GSettings
+  - [x] Ensure engine reads settings
+  - [x] Implement live settings reload
   - [ ] Add settings validation
 
 **Deliverables**:
@@ -196,6 +212,8 @@
 ## PHASE 7: Packaging + System Integration
 
 **Goal**: Feels native to GNOME.
+
+**Current code note**: The packaged component file for the IBus engine is installed, the GSettings schema is real and compiled at install time, and prefs already use GSettings for trigger and variant preferences. The remaining packaging work is around the desktop integration story and installation validation.
 
 - [ ] Desktop integration
   - [ ] Create `.desktop` file
@@ -332,10 +350,10 @@
 
 **Active Phase**: PHASE 2 - Minimal IBus Engine (Headless)
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-06-07
 
 **Notes**: 
 - PHASE 1 completed successfully
 - Build system functional with Rust + Meson integration
-- Ready to implement IBus engine integration
+- Phase 2 implementation is complete; manual IBus validation remains
 - Note: `ibus` crate version 0.2.0 available on crates.io for PHASE 2

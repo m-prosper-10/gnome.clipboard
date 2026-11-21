@@ -4,7 +4,7 @@
 echo "=== Testing IBus Engine Execution ==="
 echo ""
 
-BINARY_PATH=\"./engine/target/debug/emoji-input-engine\"
+BINARY_PATH="./engine/target/debug/emoji-input-engine"
 
 echo "1. Direct execution test:"
 "$BINARY_PATH" --ibus &

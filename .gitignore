@@ -13,7 +13,6 @@ prefs/target/
 prefs/Cargo.lock
 
 # Editor files
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -22,3 +21,4 @@ prefs/Cargo.lock
 # OS files
 .DS_Store
 Thumbs.db
+

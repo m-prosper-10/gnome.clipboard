@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate-assets:
+    name: Validate Data & Assets
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxml2-utils \
+            desktop-file-utils \
+            shellcheck
+
+      - name: Validate XML files (IBus component & GSettings schema)
+        run: |
+          xmllint --noout data/ibus-component.xml
+          xmllint --noout data/org.example.EmojiInput.gschema.xml
+
+      - name: Validate desktop entry
+        run: desktop-file-validate data/org.example.EmojiInputPrefs.desktop
+
+      - name: Validate emojis.json schema
+        run: |
+          python3 - <<'EOF'
+          import json
+          with open("data/emojis.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+          assert "version" in data and isinstance(data["version"], str)
+          assert "emojis" in data and isinstance(data["emojis"], list) and len(data["emojis"]) > 0
+          for idx, item in enumerate(data["emojis"]):
+              for key in ("char", "name", "keywords", "variants", "category"):
+                  assert key in item, f"Missing '{key}' at index {idx}"
+          print(f"Validated {len(data['emojis'])} emojis.")
+          EOF
+
+      - name: Lint shell scripts
+        run: shellcheck -S warning scripts/*.sh
+
+  rust:
+    name: Rust (${{ matrix.crate }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [engine, ui, prefs]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GNOME & IBus dev dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libglib2.0-dev \
+            libgtk-4-dev \
+            libadwaita-1-dev \
+            libibus-1.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}
+
+      - name: Run unit tests
+        run: cargo test --manifest-path ${{ matrix.crate }}/Cargo.toml
+
+      - name: Run Clippy
+        run: cargo clippy --manifest-path ${{ matrix.crate }}/Cargo.toml --all-targets
+
+  meson-build:
+    name: Meson Build & Install
+    runs-on: ubuntu-24.04
+    needs: [validate-assets, rust]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Meson & GNOME dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            ninja-build \
+            pkg-config \
+            libglib2.0-dev \
+            libglib2.0-bin \
+            libgtk-4-dev \
+            libadwaita-1-dev \
+            libibus-1.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure Meson
+        run: |
+          meson setup ci-build \
+            --prefix=/tmp/gnome-emoji-input-install \
+            -Dinstall_ibus_component=true \
+            -Dinstall_desktop_file=true \
+            -Dinstall_gschema=true
+
+      - name: Build and install
+        run: ninja -C ci-build install
+
+      - name: Verify installed layout
+        run: |
+          PREFIX=/tmp/gnome-emoji-input-install
+          test -x "$PREFIX/libexec/emoji-input-engine"
+          test -x "$PREFIX/libexec/emoji-input-ui"
+          test -x "$PREFIX/bin/emoji-input-prefs"
+          test -f "$PREFIX/share/ibus/component/emoji-input.xml"
+          test -f "$PREFIX/share/applications/org.example.EmojiInputPrefs.desktop"
+          test -f "$PREFIX/share/glib-2.0/schemas/gschemas.compiled"
+          test -f "$PREFIX/share/gnome-emoji-input/emojis.json"

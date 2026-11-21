@@ -3,7 +3,9 @@ use zvariant::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use log::{error, debug, warn};
+
+pub(crate) mod emoji_db;
+pub(crate) mod search;
 
 #[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
 pub struct Emoji {
@@ -12,12 +14,21 @@ pub struct Emoji {
     pub keywords: Vec<String>,
     #[serde(default)]
     pub variants: Vec<String>,
+    #[serde(default)]
+    pub category: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EmojiDatabase {
     pub version: String,
     pub emojis: Vec<Emoji>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RecentEmoji {
+    pub char: String,
+    pub count: u32,
+    pub last_used: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -33,32 +44,12 @@ impl Default for Settings {
     }
 }
 
-impl EmojiDatabase {
-    pub fn search(&self, query: &str, recents: &[String]) -> Vec<Emoji> {
-        if query.is_empty() {
-            return Vec::new();
-        }
-        
-        let mut results = Vec::new();
-        for e in &self.emojis {
-            if e.name.starts_with(query) || e.keywords.iter().any(|k| k.starts_with(query)) {
-                results.push(e.clone());
-                for v in &e.variants {
-                    let mut ve = e.clone();
-                    ve.char = v.clone();
-                    ve.variants = vec![]; // No nested variants
-                    results.push(ve);
-                }
-            }
-        }
-
-        // Sort by recents: emojis in recents list come first
-        results.sort_by_key(|e| {
-            recents.iter().position(|r| r == &e.char).unwrap_or(usize::MAX)
-        });
-
-        results
-    }
+#[derive(Debug, Clone, Serialize, Deserialize, zvariant::Type)]
+pub struct PickerPayload {
+    pub results: Vec<Emoji>,
+    pub recents: Vec<Emoji>,
+    pub selected_index: u32,
+    pub query: String,
 }
 
 pub struct EmojiEngine {
@@ -71,14 +62,26 @@ pub struct EmojiEngine {
     // Current selection index in results
     pub selected_index: usize,
     // Recently used emoji characters
-    pub recents: Vec<String>,
+    pub recents: Vec<RecentEmoji>,
+    pub recent_tick: u64,
     // Settings (trigger character, etc.)
     pub settings: Settings,
     /// Channel to forward UpdateResults to session bus for UI
-    picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
+    picker_tx: Option<Arc<tokio::sync::mpsc::Sender<PickerPayload>>>,
 }
 
 impl EmojiEngine {
+    fn canonical_usage_char(&self, committed: &str) -> String {
+        self.database
+            .emojis
+            .iter()
+            .find(|emoji| {
+                emoji.char == committed || emoji.variants.iter().any(|variant| variant == committed)
+            })
+            .map(|emoji| emoji.char.clone())
+            .unwrap_or_else(|| committed.to_string())
+    }
+
     pub fn new() -> Self {
         let mut engine = EmojiEngine {
             buffer: String::new(),
@@ -86,6 +89,7 @@ impl EmojiEngine {
             database: EmojiDatabase::default(),
             selected_index: 0,
             recents: Vec::new(),
+            recent_tick: 0,
             settings: Settings::default(),
             picker_tx: None,
         };
@@ -101,7 +105,7 @@ impl EmojiEngine {
 
     pub fn with_database_and_picker(
         database: EmojiDatabase,
-        picker_tx: Option<Arc<tokio::sync::mpsc::Sender<(Vec<Emoji>, u32)>>>,
+        picker_tx: Option<Arc<tokio::sync::mpsc::Sender<PickerPayload>>>,
     ) -> Self {
         let mut engine = EmojiEngine {
             buffer: String::new(),
@@ -109,93 +113,13 @@ impl EmojiEngine {
             database,
             selected_index: 0,
             recents: Vec::new(),
+            recent_tick: 0,
             settings: Settings::default(),
             picker_tx,
         };
         engine.load_recents();
         engine.load_settings();
         engine
-    }
-
-    fn get_config_path() -> Option<std::path::PathBuf> {
-        let home = std::env::var("HOME").ok()?;
-        let path = std::path::PathBuf::from(home)
-            .join(".config")
-            .join("gnome-emoji-input")
-            .join("settings.json");
-        Some(path)
-    }
-
-    pub fn load_settings(&mut self) {
-        if let Some(path) = Self::get_config_path() {
-            if path.exists() {
-                debug!("Loading settings from {:?}", path);
-                match std::fs::read_to_string(&path) {
-                    Ok(content) => {
-                        match serde_json::from_str::<Settings>(&content) {
-                            Ok(settings) => self.settings = settings,
-                            Err(e) => warn!("Failed to parse settings at {:?}: {}. Using defaults.", path, e),
-                        }
-                    }
-                    Err(e) => error!("Failed to read settings file at {:?}: {}", path, e),
-                }
-            } else {
-                debug!("Settings file {:?} not found, using defaults.", path);
-            }
-        }
-    }
-
-    fn get_recents_path() -> Option<std::path::PathBuf> {
-        let home = std::env::var("HOME").ok()?;
-        let path = std::path::PathBuf::from(home)
-            .join(".cache")
-            .join("gnome-emoji-input")
-            .join("recents.json");
-        
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        Some(path)
-    }
-
-    pub fn load_recents(&mut self) {
-        if let Some(path) = Self::get_recents_path() {
-            if path.exists() {
-                debug!("Loading recents from {:?}", path);
-                match std::fs::read_to_string(&path) {
-                    Ok(content) => {
-                        match serde_json::from_str::<Vec<String>>(&content) {
-                            Ok(recents) => self.recents = recents,
-                            Err(e) => warn!("Failed to parse recents at {:?}: {}. Starting fresh.", path, e),
-                        }
-                    }
-                    Err(e) => error!("Failed to read recents file at {:?}: {}", path, e),
-                }
-            }
-        }
-    }
-
-    pub fn save_recents(&self) {
-        if let Some(path) = Self::get_recents_path() {
-            match serde_json::to_string(&self.recents) {
-                Ok(content) => {
-                    if let Err(e) = std::fs::write(&path, content) {
-                        error!("Failed to save recents to {:?}: {}", path, e);
-                    }
-                }
-                Err(e) => error!("Failed to serialize recents: {}", e),
-            }
-        }
-    }
-
-    pub fn record_usage(&mut self, char: String) {
-        // Remove if already present
-        self.recents.retain(|c| c != &char);
-        // Add to front
-        self.recents.insert(0, char);
-        // Keep only top 20
-        self.recents.truncate(20);
-        self.save_recents();
     }
     
     /// Processes a key event and returns an optional string to commit.
@@ -214,6 +138,7 @@ impl EmojiEngine {
         if (_state & SUPER_MASK) != 0 && (_state & RELEASE_MASK) == 0 && keyval == 0x3b {
             if self.buffer.is_empty() {
                 self.buffer.push(trigger);
+                self.selected_index = 0;
             }
             return (true, None);
         }
@@ -224,11 +149,13 @@ impl EmojiEngine {
             
             if c == trigger && self.buffer.is_empty() {
                 self.buffer.push(c);
+                self.selected_index = 0;
                 return (true, None);
             }
             
             if !self.buffer.is_empty() {
                 self.buffer.push(c);
+                self.selected_index = 0;
                 return (true, None);
             }
             
@@ -246,13 +173,21 @@ impl EmojiEngine {
                     self.buffer.pop();
                     if self.buffer.is_empty() {
                         self.internal_reset();
+                    } else {
+                        self.selected_index = 0;
                     }
                     (true, None)
                 } else {
                     (false, None)
                 }
             }
-            0xff0d => { // Enter
+            0xff0d | 0xff8d => { // Enter / KP_Enter
+                if self.buffer == ":emoji:" {
+                    self.record_usage("🙂".to_string());
+                    self.internal_reset();
+                    return (true, Some("🙂".to_string()));
+                }
+
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let results = self.database.search(query, &self.recents);
@@ -265,7 +200,7 @@ impl EmojiEngine {
                 }
                 (false, None)
             }
-            0xff52 => { // Arrow Up
+            0xff51 => { // Arrow Left
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
@@ -276,7 +211,7 @@ impl EmojiEngine {
                 }
                 (false, None)
             }
-            0xff54 => { // Arrow Down
+            0xff53 => { // Arrow Right
                 if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
                     let query = self.buffer.trim_start_matches(trigger);
                     let count = self.database.search(query, &self.recents).len();
@@ -285,6 +220,34 @@ impl EmojiEngine {
                         return (true, None);
                     }
                 }
+                (false, None)
+            }
+            0xff52 => { // Arrow Up (step by grid row width 6)
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        let step = 6.min(count);
+                        self.selected_index = (self.selected_index + count - step) % count;
+                        return (true, None);
+                    }
+                }
+                (false, None)
+            }
+            0xff54 => { // Arrow Down (step by grid row width 6)
+                if !self.buffer.is_empty() && self.buffer.starts_with(trigger) {
+                    let query = self.buffer.trim_start_matches(trigger);
+                    let count = self.database.search(query, &self.recents).len();
+                    if count > 0 {
+                        let step = 6.min(count);
+                        self.selected_index = (self.selected_index + step) % count;
+                        return (true, None);
+                    }
+                }
+                (false, None)
+            }
+            0xffe1..=0xffee | 0xfe01..=0xfe0f => {
+                // Modifier / level-shift keys (Shift, Ctrl, Alt, Super, etc.) should not cancel composition
                 (false, None)
             }
             _ => {
@@ -298,6 +261,7 @@ impl EmojiEngine {
     
     pub fn internal_reset(&mut self) {
         self.buffer.clear();
+        self.selected_index = 0;
     }
     
     pub fn internal_enable(&mut self) {
@@ -309,6 +273,10 @@ impl EmojiEngine {
         self.enabled = false;
         self.internal_reset();
     }
+
+    pub fn refresh_settings_if_changed(&mut self) {
+        self.load_settings();
+    }
 }
 
 #[interface(name = "org.freedesktop.IBus.Engine")]
@@ -317,40 +285,55 @@ impl EmojiEngine {
         &mut self,
         #[zbus(signal_emitter)] se: SignalEmitter<'_>,
         keyval: u32,
-        _keycode: u32,
+        keycode: u32,
         state: u32,
     ) -> fdo::Result<bool> {
+        if !self.enabled {
+            return Ok(false);
+        }
+
         // state & (1 << 30) is key release in IBus
         if (state & (1 << 30)) != 0 {
             return Ok(false);
         }
 
-        let (handled, commit) = self.internal_process_key_event(keyval, 0, 0);
+        if self.buffer.is_empty() {
+            self.refresh_settings_if_changed();
+        }
+
+        let (handled, commit) = self.internal_process_key_event(keyval, keycode, state);
         
         // Update preedit text always if we are in composition
         let visible = !self.buffer.is_empty();
-        let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), self.buffer.len() as u32, visible).await;
+        let cursor_pos = self.buffer.chars().count() as u32;
+        let _ = self.emit_update_preedit_text(&se, self.buffer.clone(), cursor_pos, visible).await;
 
         let trigger = self.settings.trigger_char.chars().next().unwrap_or(':');
 
         // Emit search results if in composition (or empty to hide popup)
-        let (emojis, selected) = if visible && self.buffer.starts_with(trigger) {
+        let (emojis, recents_list, selected, query_str) = if visible && self.buffer.starts_with(trigger) {
             let query = self.buffer.trim_start_matches(trigger);
             let emojis = self.database.search(query, &self.recents);
+            let recents_list = search::recent_emojis(&self.database, &self.recents);
             let count = emojis.len();
             if self.selected_index >= count && count > 0 {
                 self.selected_index = 0;
             }
-            (emojis, self.selected_index as u32)
+            (emojis, recents_list, self.selected_index as u32, query.to_string())
         } else {
-            (Vec::new(), 0)
+            (Vec::new(), Vec::new(), 0, String::new())
         };
         if visible && self.buffer.starts_with(trigger) {
             let _ = self.emit_update_results(&se, emojis.clone(), selected).await;
         }
         // Forward to session bus for UI popup (IBus bus may not be visible to UI)
         if let Some(ref tx) = self.picker_tx {
-            let _ = tx.try_send((emojis, selected));
+            let _ = tx.try_send(PickerPayload {
+                results: emojis,
+                recents: recents_list,
+                selected_index: selected,
+                query: query_str,
+            });
         }
 
         if let Some(text) = commit {
@@ -381,14 +364,23 @@ impl EmojiEngine {
         #[zbus(signal_emitter)] se: SignalEmitter<'_>,
         text: String,
     ) -> fdo::Result<()> {
+        self.internal_reset();
+        // Notify UI to hide popup first so focus returns to the target application
+        if let Some(ref tx) = self.picker_tx {
+            let _ = tx.try_send(PickerPayload {
+                results: Vec::new(),
+                recents: Vec::new(),
+                selected_index: 0,
+                query: String::new(),
+            });
+        }
+        let _ = self.emit_update_preedit_text(&se, String::new(), 0, false).await;
+
         if !text.is_empty() {
+            // Brief yield so the window manager returns focus to the target app before CommitText
+            tokio::time::sleep(std::time::Duration::from_millis(60)).await;
             self.record_usage(text.clone());
             let _ = self.emit_commit_text(&se, text).await;
-        }
-        self.internal_reset();
-        // Notify UI to hide popup
-        if let Some(ref tx) = self.picker_tx {
-            let _ = tx.try_send((Vec::new(), 0));
         }
         Ok(())
     }
@@ -407,17 +399,28 @@ impl EmojiEngine {
     async fn update_results_signal(se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()>;
 }
 
+fn make_ibus_text(text: String) -> Value<'static> {
+    let attrs_tuple = (
+        "IBusAttrList",
+        HashMap::<String, Value>::new(),
+        Vec::<Value>::new(),
+    );
+    let ibus_text_tuple = (
+        "IBusText",
+        HashMap::<String, Value>::new(),
+        text,
+        Value::from(attrs_tuple),
+    );
+    Value::from(ibus_text_tuple)
+}
+
 impl EmojiEngine {
     async fn emit_commit_text(&self, se: &SignalEmitter<'_>, text: String) -> zbus::Result<()> {
-        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
-        let variant = Value::from(ibus_text);
-        Self::commit_text_signal(se, variant.into()).await
+        Self::commit_text_signal(se, make_ibus_text(text)).await
     }
 
     async fn emit_update_preedit_text(&self, se: &SignalEmitter<'_>, text: String, cursor_pos: u32, visible: bool) -> zbus::Result<()> {
-        let ibus_text = (text, Vec::<Value>::new(), HashMap::<String, Value>::new());
-        let variant = Value::from(ibus_text);
-        Self::update_preedit_text_signal(se, variant.into(), cursor_pos, visible).await
+        Self::update_preedit_text_signal(se, make_ibus_text(text), cursor_pos, visible).await
     }
 
     async fn emit_update_results(&self, se: &SignalEmitter<'_>, results: Vec<Emoji>, selected_index: u32) -> zbus::Result<()> {
@@ -447,8 +450,8 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "❤️".to_string(), name: "heart".to_string(), keywords: vec![], variants: vec![], category: String::new() },
             ],
         };
         let mut engine = EmojiEngine::with_database(db);
@@ -472,14 +475,35 @@ mod tests {
         assert_eq!(commit, Some("🙂".to_string()));
         assert_eq!(engine.buffer, "");
     }
+
+    #[test]
+    fn test_hardcoded_trigger() {
+        let db = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![],
+        };
+        let mut engine = EmojiEngine::with_database(db);
+        engine.internal_enable();
+
+        for keyval in [0x3a, 0x65, 0x6d, 0x6f, 0x6a, 0x69, 0x3a] {
+            let (handled, commit) = engine.internal_process_key_event(keyval, 0, 0);
+            assert!(handled);
+            assert_eq!(commit, None);
+        }
+
+        let (handled, commit) = engine.internal_process_key_event(0xff0d, 0, 0);
+        assert!(handled);
+        assert_eq!(commit, Some("🙂".to_string()));
+        assert_eq!(engine.buffer, "");
+    }
     
     #[test]
     fn test_search_logic() {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😊".to_string(), name: "blush".to_string(), keywords: vec!["happy".to_string()], variants: vec![], category: String::new() },
             ],
         };
         
@@ -489,13 +513,17 @@ mod tests {
         // Search by keyword
         assert_eq!(db.search("hap", &[]).len(), 1);
         assert_eq!(db.search("hap", &[])[0].char, "😊");
+
+        // Case-insensitive search
+        assert_eq!(db.search("SMI", &[]).len(), 1);
+        assert_eq!(db.search("SMI", &[])[0].char, "🙂");
         
         // No match
         assert_eq!(db.search("xyz", &[]).len(), 0);
     }
 
     #[test]
-    fn test_variant_expansion() {
+    fn test_variant_search_keeps_base_result() {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
@@ -503,16 +531,16 @@ mod tests {
                     char: "👍".to_string(), 
                     name: "thumbsup".to_string(), 
                     keywords: vec![], 
-                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()] 
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string()],
+                    category: String::new(),
                 },
             ],
         };
 
         let results = db.search("thumb", &[]);
-        assert_eq!(results.len(), 3);
+        assert_eq!(results.len(), 1);
         assert_eq!(results[0].char, "👍");
-        assert_eq!(results[1].char, "👍🏻");
-        assert_eq!(results[2].char, "👍🏼");
+        assert_eq!(results[0].variants, vec!["👍🏻".to_string(), "👍🏼".to_string()]);
     }
 
     #[test]
@@ -520,9 +548,9 @@ mod tests {
         let db = EmojiDatabase {
             version: "test".to_string(),
             emojis: vec![
-                Emoji { char: "🙂".to_string(), name: "smile1".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😊".to_string(), name: "smile2".to_string(), keywords: vec![], variants: vec![] },
-                Emoji { char: "😄".to_string(), name: "smile3".to_string(), keywords: vec![], variants: vec![] },
+                Emoji { char: "🙂".to_string(), name: "smile1".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😊".to_string(), name: "smile2".to_string(), keywords: vec![], variants: vec![], category: String::new() },
+                Emoji { char: "😄".to_string(), name: "smile3".to_string(), keywords: vec![], variants: vec![], category: String::new() },
             ],
         };
 
@@ -531,14 +559,35 @@ mod tests {
         assert_eq!(results[0].char, "🙂");
         assert_eq!(results[1].char, "😊");
 
-        // Prioritize smile2
-        let results = db.search("smile", &["😊".to_string()]);
+        // Prioritize smile2 by usage count
+        let results = db.search(
+            "smile",
+            &[RecentEmoji {
+                char: "😊".to_string(),
+                count: 3,
+                last_used: 10,
+            }],
+        );
         assert_eq!(results[0].char, "😊");
         assert_eq!(results[1].char, "🙂");
         assert_eq!(results[2].char, "😄");
 
-        // Prioritize smile3 then smile2
-        let results = db.search("smile", &["😄".to_string(), "😊".to_string()]);
+        // Prioritize smile3 over smile2 when counts differ
+        let results = db.search(
+            "smile",
+            &[
+                RecentEmoji {
+                    char: "😄".to_string(),
+                    count: 5,
+                    last_used: 20,
+                },
+                RecentEmoji {
+                    char: "😊".to_string(),
+                    count: 3,
+                    last_used: 10,
+                },
+            ],
+        );
         assert_eq!(results[0].char, "😄");
         assert_eq!(results[1].char, "😊");
         assert_eq!(results[2].char, "🙂");
@@ -548,15 +597,55 @@ mod tests {
     fn test_recents_recording() {
         let mut engine = EmojiEngine::new();
         engine.recents = vec![];
+        engine.database = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji {
+                    char: "👍".to_string(),
+                    name: "thumbsup".to_string(),
+                    keywords: vec![],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
+                    category: String::new(),
+                },
+            ],
+        };
         
         engine.record_usage("👍".to_string());
-        assert_eq!(engine.recents, vec!["👍".to_string()]);
+        assert_eq!(engine.recents.len(), 1);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 1);
 
         engine.record_usage("❤️".to_string());
-        assert_eq!(engine.recents, vec!["❤️".to_string(), "👍".to_string()]);
+        assert_eq!(engine.recents[0].char, "❤️");
+        assert_eq!(engine.recents[0].count, 1);
+        assert_eq!(engine.recents[1].char, "👍");
 
-        // Move to front if repeated
+        // Move to front and increment if repeated
         engine.record_usage("👍".to_string());
-        assert_eq!(engine.recents, vec!["👍".to_string(), "❤️".to_string()]);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 2);
+    }
+
+    #[test]
+    fn test_variant_usage_counts_toward_base_emoji() {
+        let mut engine = EmojiEngine::new();
+        engine.recents = vec![];
+        engine.database = EmojiDatabase {
+            version: "test".to_string(),
+            emojis: vec![
+                Emoji {
+                    char: "👍".to_string(),
+                    name: "thumbsup".to_string(),
+                    keywords: vec![],
+                    variants: vec!["👍🏻".to_string(), "👍🏼".to_string(), "👍🏾".to_string()],
+                    category: String::new(),
+                },
+            ],
+        };
+
+        engine.record_usage("👍🏾".to_string());
+        assert_eq!(engine.recents.len(), 1);
+        assert_eq!(engine.recents[0].char, "👍");
+        assert_eq!(engine.recents[0].count, 1);
     }
 }

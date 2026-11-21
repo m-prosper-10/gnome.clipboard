@@ -5,8 +5,7 @@ set -e
 
 echo "Uninstalling GNOME Emoji Input Manager..."
 
-# This will be populated with actual uninstall logic
-# For now, rely on Meson's built-in uninstall
+# Wrapper around Meson's built-in uninstall flow.
 echo "Please use: sudo ninja -C build uninstall"
 echo "Or manually remove installed files from the build log"
 
